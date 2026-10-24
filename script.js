@@ -1,5 +1,7 @@
 const NOTE_NAMES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 
+const INTERVAL_NAMES = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
 const OPEN_STRINGS = [
     { label: "e", note: 4 },
     { label: "B", note: 11 },
@@ -20,21 +22,68 @@ const SCALES = {
     }
 };
 
+const TRIADS = {
+    major: {
+        name: "major",
+        intervals: [0, 4, 7]
+    },
+    minor: {
+        name: "minor",
+        intervals: [0, 3, 7]
+    },
+    diminished: {
+        name: "diminished",
+        intervals: [0, 3, 6]
+    },
+    augmented: {
+        name: "augmented",
+        intervals: [0, 4, 8]
+    }
+};
+
 const keySelect = document.getElementById("keySelect");
 const scaleSelect = document.getElementById("scaleSelect");
+const labelModeSelect = document.getElementById("labelModeSelect");
 const fretSelect = document.getElementById("fretSelect");
-const noteNameToggle = document.getElementById("noteNameToggle");
+const triadToggle = document.getElementById("triadToggle");
+const triadRootSelect = document.getElementById("triadRootSelect");
+const triadQualitySelect = document.getElementById("triadQualitySelect");
 const resetButton = document.getElementById("resetButton");
 const scaleTitle = document.getElementById("scaleTitle");
 const scaleNotes = document.getElementById("scaleNotes");
+const triadSummary = document.getElementById("triadSummary");
+const triadTitle = document.getElementById("triadTitle");
+const triadNotes = document.getElementById("triadNotes");
 const fretboard = document.getElementById("fretboard");
 
 function getScaleNotes(root, scaleKey) {
     return SCALES[scaleKey].intervals.map(interval => (root + interval) % 12);
 }
 
+function getTriadNotes(root, quality) {
+    return TRIADS[quality].intervals.map(interval => (root + interval) % 12);
+}
+
 function formatKeyName(noteValue) {
     return NOTE_NAMES[noteValue];
+}
+
+function getIntervalName(note, scaleRoot) {
+    const distance = (note - scaleRoot + 12) % 12;
+    return INTERVAL_NAMES[distance];
+}
+
+function getMarkerLabel(note, scaleRoot, labelMode) {
+    return labelMode === "intervals"
+        ? getIntervalName(note, scaleRoot)
+        : NOTE_NAMES[note];
+}
+
+function makeSummaryChip(note, scaleRoot, className = "") {
+    const chip = document.createElement("span");
+    chip.className = `note-chip${className ? ` ${className}` : ""}`;
+    chip.textContent = `${NOTE_NAMES[note]} · ${getIntervalName(note, scaleRoot)}`;
+    return chip;
 }
 
 function renderScaleSummary(root, scaleKey) {
@@ -45,15 +94,35 @@ function renderScaleSummary(root, scaleKey) {
     scaleNotes.innerHTML = "";
 
     notes.forEach((note, index) => {
-        const chip = document.createElement("span");
-        chip.className = `note-chip${index === 0 ? " root-chip" : ""}`;
-        chip.textContent = NOTE_NAMES[note];
+        const chip = makeSummaryChip(note, root, index === 0 ? "root-chip" : "");
         scaleNotes.appendChild(chip);
     });
 }
 
-function renderFretboard(root, scaleKey, maxFret, showNames) {
-    const notesInScale = new Set(getScaleNotes(root, scaleKey));
+function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad) {
+    triadRootSelect.disabled = !showTriad;
+    triadQualitySelect.disabled = !showTriad;
+    triadSummary.hidden = !showTriad;
+
+    if (!showTriad) {
+        return;
+    }
+
+    const triad = TRIADS[quality];
+    const notes = getTriadNotes(triadRoot, quality);
+
+    triadTitle.textContent = `${formatKeyName(triadRoot)} ${triad.name} triad`;
+    triadNotes.innerHTML = "";
+
+    notes.forEach((note, index) => {
+        const extraClass = index === 0 ? "triad-chip triad-root-chip" : "triad-chip";
+        triadNotes.appendChild(makeSummaryChip(note, scaleRoot, extraClass));
+    });
+}
+
+function renderFretboard(scaleRoot, scaleKey, maxFret, labelMode, showTriad, triadRoot, triadQuality) {
+    const scaleNoteSet = new Set(getScaleNotes(scaleRoot, scaleKey));
+    const triadNoteSet = showTriad ? new Set(getTriadNotes(triadRoot, triadQuality)) : new Set();
     const fretCount = maxFret + 1;
     const markerFrets = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21, 24]);
 
@@ -88,6 +157,8 @@ function renderFretboard(root, scaleKey, maxFret, showNames) {
 
         for (let fret = 0; fret <= maxFret; fret += 1) {
             const note = (stringInfo.note + fret) % 12;
+            const inScale = scaleNoteSet.has(note);
+            const inTriad = triadNoteSet.has(note);
             const cell = document.createElement("div");
             cell.className = "fret-cell";
 
@@ -95,22 +166,57 @@ function renderFretboard(root, scaleKey, maxFret, showNames) {
                 cell.classList.add("marker-fret");
             }
 
-            if (notesInScale.has(note)) {
-                const marker = document.createElement("span");
-                marker.className = "note-marker";
-                marker.textContent = NOTE_NAMES[note];
-                marker.title = `${NOTE_NAMES[note]} · fret ${fret}`;
+            if (inScale || inTriad) {
+                const markerStack = document.createElement("span");
+                markerStack.className = "marker-stack";
 
-                if (note === root) {
-                    marker.classList.add("root-note");
+                if (!inScale && inTriad) {
+                    markerStack.classList.add("triad-only");
                 }
 
-                if (!showNames) {
-                    marker.classList.add("note-hidden");
-                    marker.setAttribute("aria-label", NOTE_NAMES[note]);
+                if (labelMode === "intervals") {
+                    markerStack.classList.add("interval-mode");
                 }
 
-                cell.appendChild(marker);
+                if (inScale) {
+                    const scaleMarker = document.createElement("span");
+                    scaleMarker.className = "scale-marker";
+
+                    if (note === scaleRoot) {
+                        scaleMarker.classList.add("root-note");
+                    }
+
+                    markerStack.appendChild(scaleMarker);
+                }
+
+                if (inTriad) {
+                    const triadMarker = document.createElement("span");
+                    triadMarker.className = "triad-marker";
+
+                    if (note === triadRoot) {
+                        triadMarker.classList.add("triad-root-note");
+                    }
+
+                    markerStack.appendChild(triadMarker);
+                }
+
+                const label = document.createElement("span");
+                label.className = "marker-label";
+                label.textContent = getMarkerLabel(note, scaleRoot, labelMode);
+                markerStack.appendChild(label);
+
+                const layerDescription = [
+                    inScale ? `${SCALES[scaleKey].name} tone` : null,
+                    inTriad ? `${TRIADS[triadQuality].name} triad tone` : null
+                ].filter(Boolean).join(" + ");
+
+                markerStack.title = `${NOTE_NAMES[note]} · interval ${getIntervalName(note, scaleRoot)} · fret ${fret} · ${layerDescription}`;
+                markerStack.setAttribute(
+                    "aria-label",
+                    `${NOTE_NAMES[note]}, interval ${getIntervalName(note, scaleRoot)}, fret ${fret}, ${layerDescription}`
+                );
+
+                cell.appendChild(markerStack);
             }
 
             row.appendChild(cell);
@@ -121,24 +227,47 @@ function renderFretboard(root, scaleKey, maxFret, showNames) {
 }
 
 function render() {
-    const root = Number.parseInt(keySelect.value, 10);
+    const scaleRoot = Number.parseInt(keySelect.value, 10);
     const scaleKey = scaleSelect.value;
+    const labelMode = labelModeSelect.value;
     const maxFret = Number.parseInt(fretSelect.value, 10);
-    const showNames = noteNameToggle.checked;
+    const showTriad = triadToggle.checked;
+    const triadRoot = Number.parseInt(triadRootSelect.value, 10);
+    const triadQuality = triadQualitySelect.value;
 
-    renderScaleSummary(root, scaleKey);
-    renderFretboard(root, scaleKey, maxFret, showNames);
+    renderScaleSummary(scaleRoot, scaleKey);
+    renderTriadSummary(scaleRoot, triadRoot, triadQuality, showTriad);
+    renderFretboard(
+        scaleRoot,
+        scaleKey,
+        maxFret,
+        labelMode,
+        showTriad,
+        triadRoot,
+        triadQuality
+    );
 }
 
-[keySelect, scaleSelect, fretSelect, noteNameToggle].forEach(control => {
+[
+    keySelect,
+    scaleSelect,
+    labelModeSelect,
+    fretSelect,
+    triadToggle,
+    triadRootSelect,
+    triadQualitySelect
+].forEach(control => {
     control.addEventListener("change", render);
 });
 
 resetButton.addEventListener("click", () => {
     keySelect.value = "7";
     scaleSelect.value = "majorPentatonic";
+    labelModeSelect.value = "notes";
     fretSelect.value = "12";
-    noteNameToggle.checked = true;
+    triadToggle.checked = true;
+    triadRootSelect.value = "7";
+    triadQualitySelect.value = "major";
     render();
 });
 
