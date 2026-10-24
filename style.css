@@ -11,7 +11,6 @@
     --scale: #5aa7ff;
     --triad: #c084fc;
     --triad-strong: #d8b4fe;
-    --string: #d9dee7;
     --fret: #64748b;
 }
 
@@ -111,13 +110,14 @@ h3 {
 .tip-card p,
 .swipe-hint,
 .layer-help,
+.summary-meta,
 footer {
     color: var(--muted);
 }
 
 .subtitle {
     margin-bottom: 0;
-    max-width: 48rem;
+    max-width: 52rem;
     line-height: 1.5;
 }
 
@@ -126,7 +126,7 @@ footer {
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: 999px;
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--muted);
     font-size: 0.8rem;
     font-weight: 700;
@@ -326,6 +326,13 @@ select:disabled {
 .summary-block {
     display: grid;
     gap: 8px;
+    min-width: 0;
+}
+
+.summary-meta {
+    margin: -2px 0 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
 }
 
 .note-chips,
@@ -413,7 +420,7 @@ select:disabled {
 
 .fretboard {
     --cell-width: 54px;
-    --label-width: 36px;
+    --label-width: 44px;
     display: grid;
     width: max-content;
     min-width: 100%;
@@ -448,11 +455,35 @@ select:disabled {
     position: sticky;
     left: 0;
     z-index: 6;
+    grid-template-columns: 16px 1fr;
+    gap: 2px;
     background: #0b1728;
     color: white;
     font-size: 0.8rem;
     font-weight: 800;
     border-right: 2px solid #475569;
+}
+
+.string-number {
+    display: grid;
+    place-items: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #27364b;
+    color: var(--muted);
+    font-size: 0.58rem;
+    font-weight: 900;
+}
+
+.selected-string-row .string-label {
+    background: #23183a;
+    border-right-color: var(--triad);
+}
+
+.selected-string-row .string-number {
+    background: rgba(192, 132, 252, 0.24);
+    color: #f3e8ff;
 }
 
 .fret-number {
@@ -467,6 +498,10 @@ select:disabled {
     border-left: 1px solid var(--fret);
     background:
         linear-gradient(to bottom, transparent 49%, rgba(53, 39, 24, 0.88) 49%, rgba(53, 39, 24, 0.88) 52%, transparent 52%);
+}
+
+.fret-cell.selected-triad-string {
+    box-shadow: inset 0 0 0 999px rgba(192, 132, 252, 0.045);
 }
 
 .fret-cell:nth-child(2) {
@@ -505,8 +540,8 @@ select:disabled {
     width: 34px;
     height: 34px;
     background: var(--scale);
-    border: 2px solid rgba(255,255,255,0.78);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.24);
+    border: 2px solid rgba(255, 255, 255, 0.78);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.24);
 }
 
 .scale-marker.root-note {
@@ -542,7 +577,7 @@ select:disabled {
 
 .marker-stack.triad-only .marker-label {
     color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .marker-stack.interval-mode .marker-label {
@@ -593,10 +628,7 @@ footer {
         padding: 22px;
     }
 
-    .primary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
+    .primary-grid,
     .overlay-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -604,13 +636,8 @@ footer {
 
 @media (min-width: 980px) {
     .layer-stack {
-        grid-template-columns: 1.6fr 1fr;
+        grid-template-columns: 1fr 1fr;
         align-items: stretch;
-    }
-
-    .primary-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        align-items: end;
     }
 
     .fretboard {
@@ -629,7 +656,7 @@ footer {
     }
 
     .subtitle {
-        max-width: 60rem;
+        max-width: 64rem;
     }
 
     .control-panel {
@@ -637,15 +664,12 @@ footer {
     }
 
     .layer-stack {
-        grid-template-columns: 1.5fr 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 
-    .primary-grid {
-        grid-template-columns: repeat(4, minmax(135px, 1fr));
-    }
-
+    .primary-grid,
     .overlay-grid {
-        grid-template-columns: repeat(2, minmax(135px, 1fr));
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
     }
 
     .fret-cell {
@@ -654,17 +678,30 @@ footer {
 }
 
 @media (max-width: 520px) {
+    .hero {
+        gap: 10px;
+    }
+
+    .version-badge {
+        padding: 6px 8px;
+    }
+
+    .section-heading,
     .overlay-heading-row {
         align-items: flex-start;
     }
 
     .scale-summary {
         display: grid;
-        gap: 16px;
+        gap: 18px;
     }
 
-    .legend {
-        margin-top: 2px;
+    .fretboard {
+        --cell-width: 50px;
+    }
+
+    .swipe-hint {
+        max-width: 105px;
     }
 }
 
