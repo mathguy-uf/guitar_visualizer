@@ -8,6 +8,122 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .progression-card {
+            margin-top: 14px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: #0b1728;
+            box-shadow: inset 3px 0 0 rgba(52, 211, 153, 0.8);
+        }
+        .progression-heading,
+        .progression-entry,
+        .progression-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .progression-heading {
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .progression-entry input {
+            flex: 1 1 280px;
+            min-width: 0;
+            min-height: 44px;
+            padding: 0 13px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #0f1d31;
+            color: var(--text);
+        }
+        .progression-entry input:focus-visible {
+            outline: 3px solid rgba(52, 211, 153, 0.3);
+            outline-offset: 2px;
+        }
+        .progression-entry button,
+        .progression-nav button,
+        .progression-chip {
+            min-height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #13233b;
+            color: var(--text);
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .progression-entry button,
+        .progression-nav button {
+            padding: 0 14px;
+        }
+        .progression-entry button:hover,
+        .progression-nav button:hover,
+        .progression-chip:hover {
+            border-color: rgba(52, 211, 153, 0.7);
+        }
+        .progression-nav button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+        .progression-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .progression-chip {
+            min-width: 48px;
+            padding: 0 12px;
+        }
+        .progression-chip.active {
+            background: rgba(52, 211, 153, 0.18);
+            border-color: #34d399;
+            color: #d1fae5;
+            box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.08);
+        }
+        .progression-footer {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .progression-status,
+        .progression-error,
+        .progression-help {
+            margin: 0;
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+        .progression-status,
+        .progression-help {
+            color: var(--muted);
+        }
+        .progression-error {
+            margin-top: 10px;
+            color: #fecaca;
+        }
+        .progression-mode-label {
+            color: #6ee7b7;
+        }
+        @media (max-width: 620px) {
+            .progression-entry {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+            .progression-entry button {
+                width: 100%;
+            }
+            .progression-footer {
+                grid-template-columns: 1fr;
+            }
+            .progression-nav {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <main class="app-shell">
@@ -15,9 +131,9 @@
             <div>
                 <p class="eyebrow">FRETBOARD TRAINER</p>
                 <h1>Guitar Visualizer</h1>
-                <p class="subtitle">Use a scale as the primary layer, then place real three-string triad voicings over it to see how the shapes connect.</p>
+                <p class="subtitle">Use a scale as the primary layer, then move real triad voicings through chord progressions while seeing how they connect across the neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.3">v0.3</div>
+            <div class="version-badge" aria-label="Version 0.5">v0.5</div>
         </header>
 
         <section class="control-panel" aria-labelledby="controls-heading">
@@ -43,18 +159,9 @@
                         <label class="field">
                             <span>Key</span>
                             <select id="keySelect" aria-label="Select key">
-                                <option value="0">C</option>
-                                <option value="1">C♯ / D♭</option>
-                                <option value="2">D</option>
-                                <option value="3">E♭</option>
-                                <option value="4">E</option>
-                                <option value="5">F</option>
-                                <option value="6">F♯ / G♭</option>
-                                <option value="7" selected>G</option>
-                                <option value="8">A♭</option>
-                                <option value="9">A</option>
-                                <option value="10">B♭</option>
-                                <option value="11">B</option>
+                                <option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">E♭</option>
+                                <option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7" selected>G</option>
+                                <option value="8">A♭</option><option value="9">A</option><option value="10">B♭</option><option value="11">B</option>
                             </select>
                         </label>
 
@@ -92,7 +199,7 @@
                         <div class="layer-title-row">
                             <span class="layer-swatch triad-swatch" aria-hidden="true"></span>
                             <div>
-                                <p class="layer-label">Overlay layer</p>
+                                <p class="layer-label">Secondary layer</p>
                                 <h3 id="overlay-layer-heading">Triad voicings</h3>
                             </div>
                         </div>
@@ -108,18 +215,9 @@
                         <label class="field">
                             <span>Triad root</span>
                             <select id="triadRootSelect" aria-label="Select triad root">
-                                <option value="0">C</option>
-                                <option value="1">C♯ / D♭</option>
-                                <option value="2">D</option>
-                                <option value="3">E♭</option>
-                                <option value="4">E</option>
-                                <option value="5">F</option>
-                                <option value="6">F♯ / G♭</option>
-                                <option value="7" selected>G</option>
-                                <option value="8">A♭</option>
-                                <option value="9">A</option>
-                                <option value="10">B♭</option>
-                                <option value="11">B</option>
+                                <option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">E♭</option>
+                                <option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7" selected>G</option>
+                                <option value="8">A♭</option><option value="9">A</option><option value="10">B♭</option><option value="11">B</option>
                             </select>
                         </label>
 
@@ -154,9 +252,39 @@
                             </select>
                         </label>
                     </div>
-                    <p class="layer-help">The overlay now finds playable triad shapes on the selected three adjacent strings. The inversion is determined by the lowest sounding note of each voicing.</p>
+                    <p class="layer-help">In normal mode, all matching voicings are shown. In progression mode, the app recommends one voicing at a time and tries to minimize movement from the previous chord.</p>
                 </section>
             </div>
+
+            <section class="progression-card" aria-labelledby="progression-heading">
+                <div class="progression-heading">
+                    <div>
+                        <p class="layer-label progression-mode-label">Practice mode</p>
+                        <h3 id="progression-heading">Chord progression</h3>
+                    </div>
+                    <label class="compact-toggle">
+                        <span>Use</span>
+                        <input id="progressionToggle" type="checkbox">
+                        <span class="switch" aria-hidden="true"></span>
+                    </label>
+                </div>
+
+                <div class="progression-entry">
+                    <input id="progressionInput" type="text" value="G D Em C" aria-label="Chord progression" placeholder="Example: G D Em C">
+                    <button id="loadProgressionButton" type="button">Load progression</button>
+                </div>
+                <p class="progression-help">Separate chords with spaces, commas, or arrows. Major, minor, diminished, and augmented triads are supported.</p>
+                <p id="progressionError" class="progression-error" hidden></p>
+                <div id="progressionChips" class="progression-chips" aria-label="Progression chords"></div>
+
+                <div class="progression-footer">
+                    <p id="progressionStatus" class="progression-status">Turn progression mode on to step through the chords.</p>
+                    <div class="progression-nav">
+                        <button id="previousChordButton" type="button" disabled>← Previous</button>
+                        <button id="nextChordButton" type="button" disabled>Next →</button>
+                    </div>
+                </div>
+            </section>
         </section>
 
         <section class="scale-summary" aria-live="polite">
@@ -167,7 +295,7 @@
             </div>
 
             <div id="triadSummary" class="summary-block">
-                <p class="section-kicker triad-kicker">Overlay</p>
+                <p class="section-kicker triad-kicker">Secondary</p>
                 <h2 id="triadTitle">G major triad</h2>
                 <p id="triadMeta" class="summary-meta"></p>
                 <div id="triadNotes" class="note-chips triad-chips" aria-label="Triad notes"></div>
@@ -176,7 +304,7 @@
             <div class="legend" aria-label="Fretboard legend">
                 <span><i class="legend-dot root-dot"></i> Scale root</span>
                 <span><i class="legend-dot scale-dot"></i> Scale tone</span>
-                <span><i class="legend-dot triad-dot"></i> Triad voicing</span>
+                <span><i class="legend-dot triad-dot"></i> Translucent triad</span>
             </div>
         </section>
 
@@ -193,15 +321,15 @@
                 <div id="fretboard" class="fretboard"></div>
             </div>
 
-            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Interval labels are measured from the selected scale root, where the root is <strong>1</strong>.</p>
+            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. The solid circle is the primary scale; a larger translucent halo means the triad and scale overlap.</p>
         </section>
 
         <section class="tip-card">
             <div class="next-icon" aria-hidden="true">♬</div>
             <div>
                 <p class="section-kicker">Try this</p>
-                <h2>Follow one triad through its inversions</h2>
-                <p>Choose G major, strings 1–3, then switch between root position, 1st inversion, and 2nd inversion. Keep the G scale underneath to see how each chord shape sits inside the larger pattern.</p>
+                <h2>Follow G → D → Em → C</h2>
+                <p>Keep G major pentatonic underneath, turn on progression mode, then use Next. Watch how the recommended triad shape moves as little as possible while the scale stays fixed.</p>
             </div>
         </section>
 
