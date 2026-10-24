@@ -536,7 +536,7 @@ select:disabled {
 }
 
 .scale-marker {
-    z-index: 1;
+    z-index: 2;
     width: 34px;
     height: 34px;
     background: var(--scale);
@@ -549,12 +549,19 @@ select:disabled {
 }
 
 .triad-marker {
-    z-index: 2;
-    width: 43px;
-    height: 43px;
-    background: rgba(192, 132, 252, 0.36);
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    background: rgba(192, 132, 252, 0.38);
     border: 2px solid rgba(216, 180, 254, 0.92);
     box-shadow: 0 0 0 1px rgba(88, 28, 135, 0.15);
+}
+
+/* When both layers occupy the same position, the translucent overlay grows
+   just beyond the solid primary marker so both layers remain visible. */
+.marker-stack:not(.triad-only) .triad-marker {
+    width: 42px;
+    height: 42px;
 }
 
 .triad-marker.triad-root-note {
