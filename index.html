@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Guitar Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">FRETBOARD TRAINER</p>
+                <h1>Guitar Visualizer</h1>
+                <p class="subtitle">See pentatonic patterns across the neck and learn how the notes connect.</p>
+            </div>
+            <div class="version-badge" aria-label="Version 0.1">v0.1</div>
+        </header>
+
+        <section class="control-panel" aria-labelledby="controls-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Choose a pattern</p>
+                    <h2 id="controls-heading">Scale controls</h2>
+                </div>
+                <button id="resetButton" class="secondary-button" type="button">Reset to G</button>
+            </div>
+
+            <div class="controls-grid">
+                <label class="field">
+                    <span>Key</span>
+                    <select id="keySelect" aria-label="Select key">
+                        <option value="0">C</option>
+                        <option value="1">C♯ / D♭</option>
+                        <option value="2">D</option>
+                        <option value="3">E♭</option>
+                        <option value="4">E</option>
+                        <option value="5">F</option>
+                        <option value="6">F♯ / G♭</option>
+                        <option value="7" selected>G</option>
+                        <option value="8">A♭</option>
+                        <option value="9">A</option>
+                        <option value="10">B♭</option>
+                        <option value="11">B</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Pattern</span>
+                    <select id="scaleSelect" aria-label="Select scale pattern">
+                        <option value="majorPentatonic" selected>Major pentatonic</option>
+                        <option value="minorPentatonic">Minor pentatonic</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Fret range</span>
+                    <select id="fretSelect" aria-label="Select fret range">
+                        <option value="12" selected>0–12</option>
+                        <option value="15">0–15</option>
+                        <option value="24">0–24</option>
+                    </select>
+                </label>
+
+                <label class="toggle-field">
+                    <span class="toggle-copy">
+                        <strong>Note names</strong>
+                        <small>Show the note inside each marker</small>
+                    </span>
+                    <input id="noteNameToggle" type="checkbox" checked>
+                    <span class="switch" aria-hidden="true"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="scale-summary" aria-live="polite">
+            <div>
+                <p class="section-kicker">Currently showing</p>
+                <h2 id="scaleTitle">G major pentatonic</h2>
+            </div>
+            <div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div>
+            <div class="legend" aria-label="Fretboard legend">
+                <span><i class="legend-dot root-dot"></i> Root</span>
+                <span><i class="legend-dot scale-dot"></i> Scale tone</span>
+            </div>
+        </section>
+
+        <section class="fretboard-card" aria-labelledby="fretboard-heading">
+            <div class="fretboard-heading-row">
+                <div>
+                    <p class="section-kicker">Explore the neck</p>
+                    <h2 id="fretboard-heading">Fretboard</h2>
+                </div>
+                <p class="swipe-hint">Swipe left/right on a phone →</p>
+            </div>
+
+            <div class="fretboard-scroll" tabindex="0" aria-label="Scrollable guitar fretboard">
+                <div id="fretboard" class="fretboard"></div>
+            </div>
+
+            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Rotate your phone for a wider view.</p>
+        </section>
+
+        <section class="next-card">
+            <div class="next-icon" aria-hidden="true">♬</div>
+            <div>
+                <p class="section-kicker">Next step</p>
+                <h2>Triad overlays</h2>
+                <p>This first version focuses on getting the fretboard and pentatonic display right. Triads, inversions, and overlapping shapes come next.</p>
+            </div>
+        </section>
+
+        <footer>
+            <span>Guitar Visualizer</span>
+            <span>Open source · MIT License</span>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
