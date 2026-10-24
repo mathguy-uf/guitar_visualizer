@@ -1,8 +1,6 @@
 const NOTE_NAMES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const INTERVAL_NAMES = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
 
-// Display order is high e to low E. MIDI values let us determine the
-// actual lowest-sounding note of a triad, which determines its inversion.
 const OPEN_STRINGS = [
     { number: 1, label: "e", note: 4, midi: 64 },
     { number: 2, label: "B", note: 11, midi: 59 },
@@ -13,41 +11,17 @@ const OPEN_STRINGS = [
 ];
 
 const SCALES = {
-    majorPentatonic: {
-        name: "major pentatonic",
-        intervals: [0, 2, 4, 7, 9]
-    },
-    minorPentatonic: {
-        name: "minor pentatonic",
-        intervals: [0, 3, 5, 7, 10]
-    },
-    majorScale: {
-        name: "major scale",
-        intervals: [0, 2, 4, 5, 7, 9, 11]
-    },
-    naturalMinor: {
-        name: "natural minor",
-        intervals: [0, 2, 3, 5, 7, 8, 10]
-    }
+    majorPentatonic: { name: "major pentatonic", intervals: [0, 2, 4, 7, 9] },
+    minorPentatonic: { name: "minor pentatonic", intervals: [0, 3, 5, 7, 10] },
+    majorScale: { name: "major scale", intervals: [0, 2, 4, 5, 7, 9, 11] },
+    naturalMinor: { name: "natural minor", intervals: [0, 2, 3, 5, 7, 8, 10] }
 };
 
 const TRIADS = {
-    major: {
-        name: "major",
-        intervals: [0, 4, 7]
-    },
-    minor: {
-        name: "minor",
-        intervals: [0, 3, 7]
-    },
-    diminished: {
-        name: "diminished",
-        intervals: [0, 3, 6]
-    },
-    augmented: {
-        name: "augmented",
-        intervals: [0, 4, 8]
-    }
+    major: { name: "major", intervals: [0, 4, 7] },
+    minor: { name: "minor", intervals: [0, 3, 7] },
+    diminished: { name: "diminished", intervals: [0, 3, 6] },
+    augmented: { name: "augmented", intervals: [0, 4, 8] }
 };
 
 const STRING_SETS = {
@@ -64,6 +38,8 @@ const INVERSION_NAMES = {
     second: "2nd inversion"
 };
 
+const NATURAL_ROOTS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
 const keySelect = document.getElementById("keySelect");
 const scaleSelect = document.getElementById("scaleSelect");
 const labelModeSelect = document.getElementById("labelModeSelect");
@@ -73,6 +49,14 @@ const triadRootSelect = document.getElementById("triadRootSelect");
 const triadQualitySelect = document.getElementById("triadQualitySelect");
 const stringSetSelect = document.getElementById("stringSetSelect");
 const inversionSelect = document.getElementById("inversionSelect");
+const progressionToggle = document.getElementById("progressionToggle");
+const progressionInput = document.getElementById("progressionInput");
+const loadProgressionButton = document.getElementById("loadProgressionButton");
+const previousChordButton = document.getElementById("previousChordButton");
+const nextChordButton = document.getElementById("nextChordButton");
+const progressionChips = document.getElementById("progressionChips");
+const progressionStatus = document.getElementById("progressionStatus");
+const progressionError = document.getElementById("progressionError");
 const resetButton = document.getElementById("resetButton");
 const scaleTitle = document.getElementById("scaleTitle");
 const scaleNotes = document.getElementById("scaleNotes");
@@ -81,6 +65,10 @@ const triadTitle = document.getElementById("triadTitle");
 const triadMeta = document.getElementById("triadMeta");
 const triadNotes = document.getElementById("triadNotes");
 const fretboard = document.getElementById("fretboard");
+
+let progressionChords = [];
+let progressionIndex = 0;
+let progressionSelectedVoicing = null;
 
 function getScaleNotes(root, scaleKey) {
     return SCALES[scaleKey].intervals.map(interval => (root + interval) % 12);
@@ -95,14 +83,11 @@ function formatKeyName(noteValue) {
 }
 
 function getIntervalName(note, scaleRoot) {
-    const distance = (note - scaleRoot + 12) % 12;
-    return INTERVAL_NAMES[distance];
+    return INTERVAL_NAMES[(note - scaleRoot + 12) % 12];
 }
 
 function getMarkerLabel(note, scaleRoot, labelMode) {
-    return labelMode === "intervals"
-        ? getIntervalName(note, scaleRoot)
-        : NOTE_NAMES[note];
+    return labelMode === "intervals" ? getIntervalName(note, scaleRoot) : NOTE_NAMES[note];
 }
 
 function makeSummaryChip(note, scaleRoot, className = "") {
@@ -115,33 +100,22 @@ function makeSummaryChip(note, scaleRoot, className = "") {
 function renderScaleSummary(root, scaleKey) {
     const scale = SCALES[scaleKey];
     const notes = getScaleNotes(root, scaleKey);
-
     scaleTitle.textContent = `${formatKeyName(root)} ${scale.name}`;
     scaleNotes.innerHTML = "";
-
     notes.forEach((note, index) => {
-        scaleNotes.appendChild(
-            makeSummaryChip(note, root, index === 0 ? "root-chip" : "")
-        );
+        scaleNotes.appendChild(makeSummaryChip(note, root, index === 0 ? "root-chip" : ""));
     });
 }
 
 function getCandidatePositions(stringIndex, triadNoteSet, maxFret) {
     const stringInfo = OPEN_STRINGS[stringIndex];
     const positions = [];
-
     for (let fret = 0; fret <= maxFret; fret += 1) {
         const note = (stringInfo.note + fret) % 12;
         if (triadNoteSet.has(note)) {
-            positions.push({
-                stringIndex,
-                fret,
-                note,
-                midi: stringInfo.midi + fret
-            });
+            positions.push({ stringIndex, fret, note, midi: stringInfo.midi + fret });
         }
     }
-
     return positions;
 }
 
@@ -150,10 +124,7 @@ function classifyInversion(voicing, triadRoot, triadQuality) {
     const rootNote = triadRoot;
     const thirdNote = (triadRoot + intervals[1]) % 12;
     const fifthNote = (triadRoot + intervals[2]) % 12;
-    const bass = voicing.reduce((lowest, position) =>
-        position.midi < lowest.midi ? position : lowest
-    );
-
+    const bass = voicing.reduce((lowest, position) => position.midi < lowest.midi ? position : lowest);
     if (bass.note === rootNote) return "root";
     if (bass.note === thirdNote) return "first";
     if (bass.note === fifthNote) return "second";
@@ -163,49 +134,27 @@ function classifyInversion(voicing, triadRoot, triadQuality) {
 function getTriadVoicings(triadRoot, triadQuality, stringSetKey, inversion, maxFret) {
     const triadNotes = getTriadNotes(triadRoot, triadQuality);
     const triadNoteSet = new Set(triadNotes);
-    const setKeys = stringSetKey === "all"
-        ? Object.keys(STRING_SETS)
-        : [stringSetKey];
+    const setKeys = stringSetKey === "all" ? Object.keys(STRING_SETS) : [stringSetKey];
     const voicings = [];
 
     setKeys.forEach(setKey => {
         const stringIndices = STRING_SETS[setKey].indices;
-        const candidates = stringIndices.map(index =>
-            getCandidatePositions(index, triadNoteSet, maxFret)
-        );
+        const candidates = stringIndices.map(index => getCandidatePositions(index, triadNoteSet, maxFret));
 
         candidates[0].forEach(first => {
             candidates[1].forEach(second => {
                 candidates[2].forEach(third => {
                     const voicing = [first, second, third];
                     const noteSet = new Set(voicing.map(position => position.note));
+                    if (noteSet.size !== 3 || triadNotes.some(note => !noteSet.has(note))) return;
 
-                    // A triad voicing must contain all three chord tones once.
-                    if (noteSet.size !== 3 || triadNotes.some(note => !noteSet.has(note))) {
-                        return;
-                    }
-
-                    // Keep the displayed shapes compact enough to be practical on guitar.
                     const frets = voicing.map(position => position.fret);
-                    if (Math.max(...frets) - Math.min(...frets) > 4) {
-                        return;
-                    }
+                    if (Math.max(...frets) - Math.min(...frets) > 4) return;
 
-                    const voicingInversion = classifyInversion(
-                        voicing,
-                        triadRoot,
-                        triadQuality
-                    );
+                    const voicingInversion = classifyInversion(voicing, triadRoot, triadQuality);
+                    if (inversion !== "all" && voicingInversion !== inversion) return;
 
-                    if (inversion !== "all" && voicingInversion !== inversion) {
-                        return;
-                    }
-
-                    voicings.push({
-                        setKey,
-                        inversion: voicingInversion,
-                        positions: voicing
-                    });
+                    voicings.push({ setKey, inversion: voicingInversion, positions: voicing });
                 });
             });
         });
@@ -216,82 +165,186 @@ function getTriadVoicings(triadRoot, triadQuality, stringSetKey, inversion, maxF
 
 function getTriadPositionMap(voicings) {
     const map = new Map();
-
     voicings.forEach((voicing, voicingIndex) => {
         voicing.positions.forEach(position => {
             const key = `${position.stringIndex}:${position.fret}`;
-            if (!map.has(key)) {
-                map.set(key, {
-                    note: position.note,
-                    voicingIndices: []
-                });
-            }
+            if (!map.has(key)) map.set(key, { note: position.note, voicingIndices: [] });
             map.get(key).voicingIndices.push(voicingIndex);
         });
     });
-
     return map;
 }
 
-function renderTriadSummary(
-    scaleRoot,
-    triadRoot,
-    quality,
-    showTriad,
-    stringSetKey,
-    inversion,
-    voicingCount
-) {
-    [
-        triadRootSelect,
-        triadQualitySelect,
-        stringSetSelect,
-        inversionSelect
-    ].forEach(control => {
-        control.disabled = !showTriad;
+function getVoicingAverageFret(voicing) {
+    return voicing.positions.reduce((sum, position) => sum + position.fret, 0) / voicing.positions.length;
+}
+
+function getVoiceLeadingCost(previousVoicing, nextVoicing) {
+    if (!previousVoicing) return getVoicingAverageFret(nextVoicing);
+
+    const previousByString = new Map(previousVoicing.positions.map(position => [position.stringIndex, position.fret]));
+    const nextByString = new Map(nextVoicing.positions.map(position => [position.stringIndex, position.fret]));
+    const commonStrings = [...previousByString.keys()].filter(key => nextByString.has(key));
+
+    if (commonStrings.length === 3) {
+        return commonStrings.reduce(
+            (sum, stringIndex) => sum + Math.abs(previousByString.get(stringIndex) - nextByString.get(stringIndex)),
+            0
+        );
+    }
+
+    return Math.abs(getVoicingAverageFret(previousVoicing) - getVoicingAverageFret(nextVoicing)) * 3 + 8;
+}
+
+function chooseNearestVoicing(voicings, previousVoicing) {
+    if (voicings.length === 0) return null;
+    return voicings.reduce((best, candidate) =>
+        getVoiceLeadingCost(previousVoicing, candidate) < getVoiceLeadingCost(previousVoicing, best)
+            ? candidate
+            : best
+    );
+}
+
+function parseChordToken(rawToken) {
+    const token = rawToken.trim().replaceAll("♯", "#").replaceAll("♭", "b");
+    const match = token.match(/^([A-Ga-g])([#b]?)(maj|major|min|minor|m|dim|°|aug|\+)?$/i);
+    if (!match) return null;
+
+    const letter = match[1].toUpperCase();
+    const accidental = match[2] || "";
+    const suffix = (match[3] || "").toLowerCase();
+    let root = NATURAL_ROOTS[letter];
+    if (accidental === "#") root = (root + 1) % 12;
+    if (accidental === "b") root = (root + 11) % 12;
+
+    let quality = "major";
+    if (["m", "min", "minor"].includes(suffix)) quality = "minor";
+    if (["dim", "°"].includes(suffix)) quality = "diminished";
+    if (["aug", "+"].includes(suffix)) quality = "augmented";
+
+    const qualitySuffix = quality === "major" ? "" : quality === "minor" ? "m" : quality === "diminished" ? "°" : "+";
+    const rootLabel = `${letter}${accidental}`.replace("#", "♯").replace("b", "♭");
+    return { root, quality, label: `${rootLabel}${qualitySuffix}` };
+}
+
+function parseProgression(text) {
+    const cleaned = text
+        .replaceAll("→", " ")
+        .replaceAll("->", " ")
+        .replace(/[|,;/]+/g, " ");
+    const tokens = cleaned.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return { chords: [], invalid: [] };
+
+    const chords = [];
+    const invalid = [];
+    tokens.forEach(token => {
+        const chord = parseChordToken(token);
+        if (chord) chords.push(chord);
+        else invalid.push(token);
+    });
+    return { chords, invalid };
+}
+
+function progressionModeIsActive() {
+    return progressionToggle.checked && progressionChords.length > 0;
+}
+
+function getCurrentTriadSettings() {
+    if (progressionModeIsActive()) {
+        const chord = progressionChords[progressionIndex];
+        return { root: chord.root, quality: chord.quality };
+    }
+    return {
+        root: Number.parseInt(triadRootSelect.value, 10),
+        quality: triadQualitySelect.value
+    };
+}
+
+function renderProgressionControls() {
+    const active = progressionModeIsActive();
+    progressionChips.innerHTML = "";
+
+    progressionChords.forEach((chord, index) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = `progression-chip${active && index === progressionIndex ? " active" : ""}`;
+        chip.textContent = chord.label;
+        chip.setAttribute("aria-label", `Go to ${chord.label}, chord ${index + 1}`);
+        chip.addEventListener("click", () => {
+            progressionIndex = index;
+            render();
+        });
+        progressionChips.appendChild(chip);
     });
 
-    triadSummary.hidden = !showTriad;
+    previousChordButton.disabled = !active || progressionChords.length < 2;
+    nextChordButton.disabled = !active || progressionChords.length < 2;
 
-    if (!showTriad) {
-        return;
+    if (!progressionToggle.checked) {
+        progressionStatus.textContent = "Turn progression mode on to step through the chords.";
+    } else if (progressionChords.length === 0) {
+        progressionStatus.textContent = "Enter a progression, then choose Load progression.";
+    } else {
+        const chord = progressionChords[progressionIndex];
+        progressionStatus.textContent = `Chord ${progressionIndex + 1} of ${progressionChords.length}: ${chord.label} · nearest available voicing`;
     }
+}
+
+function loadProgression() {
+    const parsed = parseProgression(progressionInput.value);
+    if (parsed.invalid.length > 0 || parsed.chords.length === 0) {
+        const bad = parsed.invalid.length > 0 ? `Could not read: ${parsed.invalid.join(", ")}.` : "Enter at least one chord.";
+        progressionError.textContent = `${bad} Try chords like G, D, Em, C, B♭, F♯m, C° or A+.`;
+        progressionError.hidden = false;
+        return false;
+    }
+
+    progressionError.hidden = true;
+    progressionChords = parsed.chords;
+    progressionIndex = 0;
+    progressionSelectedVoicing = null;
+    progressionToggle.checked = true;
+    triadToggle.checked = true;
+    render();
+    return true;
+}
+
+function stepProgression(direction) {
+    if (!progressionModeIsActive() || progressionChords.length < 2) return;
+    progressionIndex = (progressionIndex + direction + progressionChords.length) % progressionChords.length;
+    render();
+}
+
+function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad, stringSetKey, inversion, voicingCount, progressionActive) {
+    triadToggle.disabled = progressionActive;
+    triadRootSelect.disabled = !showTriad || progressionActive;
+    triadQualitySelect.disabled = !showTriad || progressionActive;
+    stringSetSelect.disabled = !showTriad;
+    inversionSelect.disabled = !showTriad;
+    triadSummary.hidden = !showTriad;
+    if (!showTriad) return;
 
     const triad = TRIADS[quality];
     const notes = getTriadNotes(triadRoot, quality);
-    const stringSetName = stringSetKey === "all"
-        ? "All string sets"
-        : STRING_SETS[stringSetKey].name;
+    const stringSetName = stringSetKey === "all" ? "All string sets" : STRING_SETS[stringSetKey].name;
     const voicingWord = voicingCount === 1 ? "voicing" : "voicings";
 
     triadTitle.textContent = `${formatKeyName(triadRoot)} ${triad.name} triad`;
-    triadMeta.textContent = `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} ${voicingWord}`;
+    triadMeta.textContent = progressionActive
+        ? `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} recommended ${voicingWord}`
+        : `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} ${voicingWord}`;
     triadNotes.innerHTML = "";
 
     notes.forEach((note, index) => {
-        const extraClass = index === 0
-            ? "triad-chip triad-root-chip"
-            : "triad-chip";
+        const extraClass = index === 0 ? "triad-chip triad-root-chip" : "triad-chip";
         triadNotes.appendChild(makeSummaryChip(note, scaleRoot, extraClass));
     });
 }
 
-function renderFretboard(
-    scaleRoot,
-    scaleKey,
-    maxFret,
-    labelMode,
-    showTriad,
-    triadRoot,
-    triadQuality,
-    stringSetKey,
-    voicings
-) {
+function renderFretboard(scaleRoot, scaleKey, maxFret, labelMode, showTriad, triadRoot, triadQuality, stringSetKey, voicings) {
     const scaleNoteSet = new Set(getScaleNotes(scaleRoot, scaleKey));
     const triadPositionMap = showTriad ? getTriadPositionMap(voicings) : new Map();
-    const selectedStringIndices = showTriad && stringSetKey !== "all"
-        ? new Set(STRING_SETS[stringSetKey].indices)
-        : new Set();
+    const selectedStringIndices = showTriad && stringSetKey !== "all" ? new Set(STRING_SETS[stringSetKey].indices) : new Set();
     const fretCount = maxFret + 1;
     const markerFrets = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21, 24]);
 
@@ -300,7 +353,6 @@ function renderFretboard(
 
     const numberRow = document.createElement("div");
     numberRow.className = "fret-number-row";
-
     const numberLabel = document.createElement("div");
     numberLabel.className = "string-label";
     numberLabel.textContent = "";
@@ -312,16 +364,12 @@ function renderFretboard(
         numberCell.textContent = fret;
         numberRow.appendChild(numberCell);
     }
-
     fretboard.appendChild(numberRow);
 
     OPEN_STRINGS.forEach((stringInfo, stringIndex) => {
         const row = document.createElement("div");
         row.className = "fret-row";
-
-        if (selectedStringIndices.has(stringIndex)) {
-            row.classList.add("selected-string-row");
-        }
+        if (selectedStringIndices.has(stringIndex)) row.classList.add("selected-string-row");
 
         const stringLabel = document.createElement("div");
         stringLabel.className = "string-label";
@@ -332,50 +380,30 @@ function renderFretboard(
             const note = (stringInfo.note + fret) % 12;
             const inScale = scaleNoteSet.has(note);
             const positionKey = `${stringIndex}:${fret}`;
-            const triadPosition = triadPositionMap.get(positionKey);
-            const inTriad = Boolean(triadPosition);
+            const inTriad = Boolean(triadPositionMap.get(positionKey));
             const cell = document.createElement("div");
             cell.className = "fret-cell";
-
-            if (markerFrets.has(fret)) {
-                cell.classList.add("marker-fret");
-            }
-
-            if (selectedStringIndices.has(stringIndex)) {
-                cell.classList.add("selected-triad-string");
-            }
+            if (markerFrets.has(fret)) cell.classList.add("marker-fret");
+            if (selectedStringIndices.has(stringIndex)) cell.classList.add("selected-triad-string");
 
             if (inScale || inTriad) {
                 const markerStack = document.createElement("span");
                 markerStack.className = "marker-stack";
-
-                if (!inScale && inTriad) {
-                    markerStack.classList.add("triad-only");
-                }
-
-                if (labelMode === "intervals") {
-                    markerStack.classList.add("interval-mode");
-                }
+                if (!inScale && inTriad) markerStack.classList.add("triad-only");
+                if (inScale && inTriad) markerStack.classList.add("layer-overlap");
+                if (labelMode === "intervals") markerStack.classList.add("interval-mode");
 
                 if (inScale) {
                     const scaleMarker = document.createElement("span");
                     scaleMarker.className = "scale-marker";
-
-                    if (note === scaleRoot) {
-                        scaleMarker.classList.add("root-note");
-                    }
-
+                    if (note === scaleRoot) scaleMarker.classList.add("root-note");
                     markerStack.appendChild(scaleMarker);
                 }
 
                 if (inTriad) {
                     const triadMarker = document.createElement("span");
                     triadMarker.className = "triad-marker";
-
-                    if (note === triadRoot) {
-                        triadMarker.classList.add("triad-root-note");
-                    }
-
+                    if (note === triadRoot) triadMarker.classList.add("triad-root-note");
                     markerStack.appendChild(triadMarker);
                 }
 
@@ -388,19 +416,12 @@ function renderFretboard(
                     inScale ? `${SCALES[scaleKey].name} tone` : null,
                     inTriad ? `${TRIADS[triadQuality].name} triad voicing tone` : null
                 ].filter(Boolean).join(" + ");
-
                 markerStack.title = `${NOTE_NAMES[note]} · interval ${getIntervalName(note, scaleRoot)} · string ${stringInfo.number} · fret ${fret} · ${layerDescription}`;
-                markerStack.setAttribute(
-                    "aria-label",
-                    `${NOTE_NAMES[note]}, interval ${getIntervalName(note, scaleRoot)}, string ${stringInfo.number}, fret ${fret}, ${layerDescription}`
-                );
-
+                markerStack.setAttribute("aria-label", `${NOTE_NAMES[note]}, interval ${getIntervalName(note, scaleRoot)}, string ${stringInfo.number}, fret ${fret}, ${layerDescription}`);
                 cell.appendChild(markerStack);
             }
-
             row.appendChild(cell);
         }
-
         fretboard.appendChild(row);
     });
 }
@@ -410,23 +431,32 @@ function render() {
     const scaleKey = scaleSelect.value;
     const labelMode = labelModeSelect.value;
     const maxFret = Number.parseInt(fretSelect.value, 10);
-    const showTriad = triadToggle.checked;
-    const triadRoot = Number.parseInt(triadRootSelect.value, 10);
-    const triadQuality = triadQualitySelect.value;
+    const progressionActive = progressionModeIsActive();
+    const showTriad = progressionActive ? true : triadToggle.checked;
+    const triadSettings = getCurrentTriadSettings();
+    const triadRoot = triadSettings.root;
+    const triadQuality = triadSettings.quality;
     const stringSetKey = stringSetSelect.value;
     const inversion = inversionSelect.value;
 
-    const voicings = showTriad
-        ? getTriadVoicings(
-            triadRoot,
-            triadQuality,
-            stringSetKey,
-            inversion,
-            maxFret
-        )
+    triadRootSelect.value = String(triadRoot);
+    triadQualitySelect.value = triadQuality;
+
+    const allVoicings = showTriad
+        ? getTriadVoicings(triadRoot, triadQuality, stringSetKey, inversion, maxFret)
         : [];
 
+    let displayedVoicings = allVoicings;
+    if (progressionActive) {
+        const recommended = chooseNearestVoicing(allVoicings, progressionSelectedVoicing);
+        progressionSelectedVoicing = recommended;
+        displayedVoicings = recommended ? [recommended] : [];
+    } else {
+        progressionSelectedVoicing = null;
+    }
+
     renderScaleSummary(scaleRoot, scaleKey);
+    renderProgressionControls();
     renderTriadSummary(
         scaleRoot,
         triadRoot,
@@ -434,7 +464,8 @@ function render() {
         showTriad,
         stringSetKey,
         inversion,
-        voicings.length
+        displayedVoicings.length,
+        progressionActive
     );
     renderFretboard(
         scaleRoot,
@@ -445,7 +476,7 @@ function render() {
         triadRoot,
         triadQuality,
         stringSetKey,
-        voicings
+        displayedVoicings
     );
 }
 
@@ -459,9 +490,25 @@ function render() {
     triadQualitySelect,
     stringSetSelect,
     inversionSelect
-].forEach(control => {
-    control.addEventListener("change", render);
+].forEach(control => control.addEventListener("change", render));
+
+progressionToggle.addEventListener("change", () => {
+    if (progressionToggle.checked && progressionChords.length === 0) {
+        if (!loadProgression()) {
+            progressionToggle.checked = false;
+        }
+        return;
+    }
+    progressionSelectedVoicing = null;
+    render();
 });
+
+loadProgressionButton.addEventListener("click", loadProgression);
+progressionInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") loadProgression();
+});
+previousChordButton.addEventListener("click", () => stepProgression(-1));
+nextChordButton.addEventListener("click", () => stepProgression(1));
 
 resetButton.addEventListener("click", () => {
     keySelect.value = "7";
@@ -473,6 +520,12 @@ resetButton.addEventListener("click", () => {
     triadQualitySelect.value = "major";
     stringSetSelect.value = "1-3";
     inversionSelect.value = "all";
+    progressionInput.value = "G D Em C";
+    progressionToggle.checked = false;
+    progressionChords = [];
+    progressionIndex = 0;
+    progressionSelectedVoicing = null;
+    progressionError.hidden = true;
     render();
 });
 
