@@ -2,7 +2,7 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.5
+## Version 0.6
 
 Current features include:
 
@@ -22,8 +22,10 @@ Current features include:
 - Automatic nearest-voicing selection to reduce hand movement between chords
 - Triad tones outside the primary scale remain visible
 - 12, 15, or 24 fret views
-- Responsive portrait and landscape layouts for phones
+- Phone-first portrait layout with compact two-column controls
+- Landscape playing view with a wider fretboard and reduced screen clutter
 - Horizontal fretboard scrolling on narrow screens
+- iPhone safe-area support and touch-friendly controls
 
 ## Layer model
 
@@ -47,6 +49,12 @@ Then load the progression and use **Previous** or **Next**. The scale stays fixe
 The app chooses one available triad voicing for each chord. After the first chord, it scores the available shapes against the previous shape and recommends the one requiring the least fret movement. The selected string-set and inversion filters still apply.
 
 Supported triad notation includes examples such as `G`, `Em`, `B♭`, `F♯m`, `C°`, and `A+`.
+
+## Mobile layout
+
+In portrait orientation, controls are condensed into a two-column phone layout and the fretboard remains horizontally scrollable.
+
+Turn the phone sideways to switch automatically into the landscape playing layout. The interface reduces descriptive text and summary detail, widens the fretboard cells, and gives the neck more of the available screen.
 
 ## Run locally
 
