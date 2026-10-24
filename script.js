@@ -78,10 +78,6 @@ function getTriadNotes(root, quality) {
     return TRIADS[quality].intervals.map(interval => (root + interval) % 12);
 }
 
-function formatKeyName(noteValue) {
-    return NOTE_NAMES[noteValue];
-}
-
 function getIntervalName(note, scaleRoot) {
     return INTERVAL_NAMES[(note - scaleRoot + 12) % 12];
 }
@@ -100,7 +96,7 @@ function makeSummaryChip(note, scaleRoot, className = "") {
 function renderScaleSummary(root, scaleKey) {
     const scale = SCALES[scaleKey];
     const notes = getScaleNotes(root, scaleKey);
-    scaleTitle.textContent = `${formatKeyName(root)} ${scale.name}`;
+    scaleTitle.textContent = `${NOTE_NAMES[root]} ${scale.name}`;
     scaleNotes.innerHTML = "";
     notes.forEach((note, index) => {
         scaleNotes.appendChild(makeSummaryChip(note, root, index === 0 ? "root-chip" : ""));
@@ -233,15 +229,15 @@ function parseProgression(text) {
         .replaceAll("->", " ")
         .replace(/[|,;/]+/g, " ");
     const tokens = cleaned.split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) return { chords: [], invalid: [] };
-
     const chords = [];
     const invalid = [];
+
     tokens.forEach(token => {
         const chord = parseChordToken(token);
         if (chord) chords.push(chord);
         else invalid.push(token);
     });
+
     return { chords, invalid };
 }
 
@@ -286,7 +282,8 @@ function renderProgressionControls() {
         progressionStatus.textContent = "Enter a progression, then choose Load progression.";
     } else {
         const chord = progressionChords[progressionIndex];
-        progressionStatus.textContent = `Chord ${progressionIndex + 1} of ${progressionChords.length}: ${chord.label} · nearest available voicing`;
+        const layerState = triadToggle.checked ? "secondary shown" : "secondary hidden";
+        progressionStatus.textContent = `Chord ${progressionIndex + 1} of ${progressionChords.length}: ${chord.label} · ${layerState}`;
     }
 }
 
@@ -304,7 +301,6 @@ function loadProgression() {
     progressionIndex = 0;
     progressionSelectedVoicing = null;
     progressionToggle.checked = true;
-    triadToggle.checked = true;
     render();
     return true;
 }
@@ -316,11 +312,15 @@ function stepProgression(direction) {
 }
 
 function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad, stringSetKey, inversion, voicingCount, progressionActive) {
-    triadToggle.disabled = progressionActive;
+    // Progression owns the chord identity, but never owns layer visibility.
+    triadToggle.disabled = false;
     triadRootSelect.disabled = !showTriad || progressionActive;
     triadQualitySelect.disabled = !showTriad || progressionActive;
-    stringSetSelect.disabled = !showTriad;
-    inversionSelect.disabled = !showTriad;
+
+    // While a progression is active, these remain useful even when the layer is hidden.
+    stringSetSelect.disabled = !showTriad && !progressionActive;
+    inversionSelect.disabled = !showTriad && !progressionActive;
+
     triadSummary.hidden = !showTriad;
     if (!showTriad) return;
 
@@ -329,7 +329,7 @@ function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad, stringSetK
     const stringSetName = stringSetKey === "all" ? "All string sets" : STRING_SETS[stringSetKey].name;
     const voicingWord = voicingCount === 1 ? "voicing" : "voicings";
 
-    triadTitle.textContent = `${formatKeyName(triadRoot)} ${triad.name} triad`;
+    triadTitle.textContent = `${NOTE_NAMES[triadRoot]} ${triad.name} triad`;
     triadMeta.textContent = progressionActive
         ? `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} recommended ${voicingWord}`
         : `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} ${voicingWord}`;
@@ -355,7 +355,6 @@ function renderFretboard(scaleRoot, scaleKey, maxFret, labelMode, showTriad, tri
     numberRow.className = "fret-number-row";
     const numberLabel = document.createElement("div");
     numberLabel.className = "string-label";
-    numberLabel.textContent = "";
     numberRow.appendChild(numberLabel);
 
     for (let fret = 0; fret <= maxFret; fret += 1) {
@@ -379,10 +378,10 @@ function renderFretboard(scaleRoot, scaleKey, maxFret, labelMode, showTriad, tri
         for (let fret = 0; fret <= maxFret; fret += 1) {
             const note = (stringInfo.note + fret) % 12;
             const inScale = scaleNoteSet.has(note);
-            const positionKey = `${stringIndex}:${fret}`;
-            const inTriad = Boolean(triadPositionMap.get(positionKey));
+            const inTriad = triadPositionMap.has(`${stringIndex}:${fret}`);
             const cell = document.createElement("div");
             cell.className = "fret-cell";
+
             if (markerFrets.has(fret)) cell.classList.add("marker-fret");
             if (selectedStringIndices.has(stringIndex)) cell.classList.add("selected-triad-string");
 
@@ -416,12 +415,15 @@ function renderFretboard(scaleRoot, scaleKey, maxFret, labelMode, showTriad, tri
                     inScale ? `${SCALES[scaleKey].name} tone` : null,
                     inTriad ? `${TRIADS[triadQuality].name} triad voicing tone` : null
                 ].filter(Boolean).join(" + ");
+
                 markerStack.title = `${NOTE_NAMES[note]} · interval ${getIntervalName(note, scaleRoot)} · string ${stringInfo.number} · fret ${fret} · ${layerDescription}`;
                 markerStack.setAttribute("aria-label", `${NOTE_NAMES[note]}, interval ${getIntervalName(note, scaleRoot)}, string ${stringInfo.number}, fret ${fret}, ${layerDescription}`);
                 cell.appendChild(markerStack);
             }
+
             row.appendChild(cell);
         }
+
         fretboard.appendChild(row);
     });
 }
@@ -432,7 +434,7 @@ function render() {
     const labelMode = labelModeSelect.value;
     const maxFret = Number.parseInt(fretSelect.value, 10);
     const progressionActive = progressionModeIsActive();
-    const showTriad = progressionActive ? true : triadToggle.checked;
+    const showTriad = triadToggle.checked;
     const triadSettings = getCurrentTriadSettings();
     const triadRoot = triadSettings.root;
     const triadQuality = triadSettings.quality;
@@ -442,18 +444,26 @@ function render() {
     triadRootSelect.value = String(triadRoot);
     triadQualitySelect.value = triadQuality;
 
-    const allVoicings = showTriad
+    // Keep calculating progression voicings even when the secondary layer is hidden.
+    // That way Previous/Next and voice leading remain meaningful in the background.
+    const shouldCalculateVoicings = showTriad || progressionActive;
+    const allVoicings = shouldCalculateVoicings
         ? getTriadVoicings(triadRoot, triadQuality, stringSetKey, inversion, maxFret)
         : [];
 
-    let displayedVoicings = allVoicings;
+    let recommendedVoicing = null;
     if (progressionActive) {
-        const recommended = chooseNearestVoicing(allVoicings, progressionSelectedVoicing);
-        progressionSelectedVoicing = recommended;
-        displayedVoicings = recommended ? [recommended] : [];
+        recommendedVoicing = chooseNearestVoicing(allVoicings, progressionSelectedVoicing);
+        progressionSelectedVoicing = recommendedVoicing;
     } else {
         progressionSelectedVoicing = null;
     }
+
+    const displayedVoicings = !showTriad
+        ? []
+        : progressionActive
+            ? (recommendedVoicing ? [recommendedVoicing] : [])
+            : allVoicings;
 
     renderScaleSummary(scaleRoot, scaleKey);
     renderProgressionControls();
@@ -494,9 +504,7 @@ function render() {
 
 progressionToggle.addEventListener("change", () => {
     if (progressionToggle.checked && progressionChords.length === 0) {
-        if (!loadProgression()) {
-            progressionToggle.checked = false;
-        }
+        if (!loadProgression()) progressionToggle.checked = false;
         return;
     }
     progressionSelectedVoicing = null;
