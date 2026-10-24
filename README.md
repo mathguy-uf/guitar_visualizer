@@ -1,26 +1,27 @@
 # Guitar Visualizer
 
-A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, triads, intervals, inversions, and chord shapes.
+A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.3
+## Version 0.5
 
 Current features include:
 
-- Major pentatonic scales in all 12 keys
-- Minor pentatonic scales in all 12 keys
-- Full major scales in all 12 keys
-- Full natural minor scales in all 12 keys
+- Major and minor pentatonic scales in all 12 keys
+- Full major and natural minor scales in all 12 keys
 - Note-name or scale-interval marker labels
 - Interval labels measured from the selected scale root (`1`)
-- Translucent triad overlay layer
+- Solid primary scale layer with a translucent secondary triad layer
+- Larger translucent halo when a scale tone and triad tone overlap
 - Major, minor, diminished, and augmented triads
 - Real three-string triad voicings rather than every chord tone on the neck
 - Selectable string sets: 1–3, 2–4, 3–5, 4–6, or all sets
 - Root-position, first-inversion, second-inversion, or all-inversion filters
-- Voicing count for the selected fret range
+- Chord progression mode with Previous and Next controls
+- Progression input such as `G D Em C`, with spaces, commas, or arrows
+- Clickable progression chord buttons
+- Automatic nearest-voicing selection to reduce hand movement between chords
 - Triad tones outside the primary scale remain visible
 - 12, 15, or 24 fret views
-- Root-note highlighting
 - Responsive portrait and landscape layouts for phones
 - Horizontal fretboard scrolling on narrow screens
 
@@ -28,10 +29,24 @@ Current features include:
 
 The fretboard uses two visual layers:
 
-1. **Primary layer:** the selected pentatonic, major, or natural-minor scale.
-2. **Overlay layer:** optional translucent three-string triad voicings.
+1. **Primary layer:** the selected pentatonic, major, or natural-minor scale, shown as solid markers.
+2. **Secondary layer:** optional translucent three-string triad voicings.
 
-The overlay can be restricted to a particular adjacent three-string set and inversion. This makes it possible to follow a chord through root position, first inversion, and second inversion while keeping the larger scale visible underneath.
+When the two layers occupy the same fret/string position, the translucent secondary marker becomes larger so it remains visible as a halo around the primary marker.
+
+## Chord progression mode
+
+Enter a progression such as:
+
+```text
+G D Em C
+```
+
+Then load the progression and use **Previous** or **Next**. The scale stays fixed as the primary layer while the secondary layer changes to the current chord.
+
+The app chooses one available triad voicing for each chord. After the first chord, it scores the available shapes against the previous shape and recommends the one requiring the least fret movement. The selected string-set and inversion filters still apply.
+
+Supported triad notation includes examples such as `G`, `Em`, `B♭`, `F♯m`, `C°`, and `A+`.
 
 ## Run locally
 
@@ -45,13 +60,12 @@ In the repository, open **Settings → Pages** and choose:
 - Branch: `main`
 - Folder: `/ (root)`
 
-The site will then be available through GitHub Pages.
-
-## Planned next features
+## Possible next features
 
 - Click or tap a triad shape to isolate it
-- Optional chord-progressions mode
-- Saved practice views
+- Chord-relative interval labels
+- Tap notes or triads to hear them
+- Saved/shareable practice views
 - Practice/game mode
 - Custom fretboard patterns
 
