@@ -15,76 +15,144 @@
             <div>
                 <p class="eyebrow">FRETBOARD TRAINER</p>
                 <h1>Guitar Visualizer</h1>
-                <p class="subtitle">See pentatonic patterns across the neck and learn how the notes connect.</p>
+                <p class="subtitle">See a scale as your primary layer, then place translucent triads over it to understand how the shapes connect.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.1">v0.1</div>
+            <div class="version-badge" aria-label="Version 0.2">v0.2</div>
         </header>
 
         <section class="control-panel" aria-labelledby="controls-heading">
             <div class="section-heading">
                 <div>
-                    <p class="section-kicker">Choose a pattern</p>
-                    <h2 id="controls-heading">Scale controls</h2>
+                    <p class="section-kicker">Build your view</p>
+                    <h2 id="controls-heading">Fretboard layers</h2>
                 </div>
                 <button id="resetButton" class="secondary-button" type="button">Reset to G</button>
             </div>
 
-            <div class="controls-grid">
-                <label class="field">
-                    <span>Key</span>
-                    <select id="keySelect" aria-label="Select key">
-                        <option value="0">C</option>
-                        <option value="1">C♯ / D♭</option>
-                        <option value="2">D</option>
-                        <option value="3">E♭</option>
-                        <option value="4">E</option>
-                        <option value="5">F</option>
-                        <option value="6">F♯ / G♭</option>
-                        <option value="7" selected>G</option>
-                        <option value="8">A♭</option>
-                        <option value="9">A</option>
-                        <option value="10">B♭</option>
-                        <option value="11">B</option>
-                    </select>
-                </label>
+            <div class="layer-stack">
+                <section class="layer-card primary-layer" aria-labelledby="primary-layer-heading">
+                    <div class="layer-title-row">
+                        <span class="layer-swatch scale-swatch" aria-hidden="true"></span>
+                        <div>
+                            <p class="layer-label">Primary layer</p>
+                            <h3 id="primary-layer-heading">Scale</h3>
+                        </div>
+                    </div>
 
-                <label class="field">
-                    <span>Pattern</span>
-                    <select id="scaleSelect" aria-label="Select scale pattern">
-                        <option value="majorPentatonic" selected>Major pentatonic</option>
-                        <option value="minorPentatonic">Minor pentatonic</option>
-                    </select>
-                </label>
+                    <div class="controls-grid primary-grid">
+                        <label class="field">
+                            <span>Key</span>
+                            <select id="keySelect" aria-label="Select key">
+                                <option value="0">C</option>
+                                <option value="1">C♯ / D♭</option>
+                                <option value="2">D</option>
+                                <option value="3">E♭</option>
+                                <option value="4">E</option>
+                                <option value="5">F</option>
+                                <option value="6">F♯ / G♭</option>
+                                <option value="7" selected>G</option>
+                                <option value="8">A♭</option>
+                                <option value="9">A</option>
+                                <option value="10">B♭</option>
+                                <option value="11">B</option>
+                            </select>
+                        </label>
 
-                <label class="field">
-                    <span>Fret range</span>
-                    <select id="fretSelect" aria-label="Select fret range">
-                        <option value="12" selected>0–12</option>
-                        <option value="15">0–15</option>
-                        <option value="24">0–24</option>
-                    </select>
-                </label>
+                        <label class="field">
+                            <span>Pattern</span>
+                            <select id="scaleSelect" aria-label="Select scale pattern">
+                                <option value="majorPentatonic" selected>Major pentatonic</option>
+                                <option value="minorPentatonic">Minor pentatonic</option>
+                            </select>
+                        </label>
 
-                <label class="toggle-field">
-                    <span class="toggle-copy">
-                        <strong>Note names</strong>
-                        <small>Show the note inside each marker</small>
-                    </span>
-                    <input id="noteNameToggle" type="checkbox" checked>
-                    <span class="switch" aria-hidden="true"></span>
-                </label>
+                        <label class="field">
+                            <span>Marker labels</span>
+                            <select id="labelModeSelect" aria-label="Choose marker label style">
+                                <option value="notes" selected>Note names</option>
+                                <option value="intervals">Intervals</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Fret range</span>
+                            <select id="fretSelect" aria-label="Select fret range">
+                                <option value="12" selected>0–12</option>
+                                <option value="15">0–15</option>
+                                <option value="24">0–24</option>
+                            </select>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="layer-card overlay-layer" aria-labelledby="overlay-layer-heading">
+                    <div class="overlay-heading-row">
+                        <div class="layer-title-row">
+                            <span class="layer-swatch triad-swatch" aria-hidden="true"></span>
+                            <div>
+                                <p class="layer-label">Overlay layer</p>
+                                <h3 id="overlay-layer-heading">Triad</h3>
+                            </div>
+                        </div>
+
+                        <label class="compact-toggle">
+                            <span>Show</span>
+                            <input id="triadToggle" type="checkbox" checked>
+                            <span class="switch" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="controls-grid overlay-grid">
+                        <label class="field">
+                            <span>Triad root</span>
+                            <select id="triadRootSelect" aria-label="Select triad root">
+                                <option value="0">C</option>
+                                <option value="1">C♯ / D♭</option>
+                                <option value="2">D</option>
+                                <option value="3">E♭</option>
+                                <option value="4">E</option>
+                                <option value="5">F</option>
+                                <option value="6">F♯ / G♭</option>
+                                <option value="7" selected>G</option>
+                                <option value="8">A♭</option>
+                                <option value="9">A</option>
+                                <option value="10">B♭</option>
+                                <option value="11">B</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Quality</span>
+                            <select id="triadQualitySelect" aria-label="Select triad quality">
+                                <option value="major" selected>Major</option>
+                                <option value="minor">Minor</option>
+                                <option value="diminished">Diminished</option>
+                                <option value="augmented">Augmented</option>
+                            </select>
+                        </label>
+                    </div>
+                    <p class="layer-help">The triad is drawn as a translucent layer. Chord tones outside the scale still appear, so you can see exactly where the two ideas overlap.</p>
+                </section>
             </div>
         </section>
 
         <section class="scale-summary" aria-live="polite">
-            <div>
-                <p class="section-kicker">Currently showing</p>
+            <div class="summary-block">
+                <p class="section-kicker">Primary</p>
                 <h2 id="scaleTitle">G major pentatonic</h2>
+                <div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div>
             </div>
-            <div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div>
+
+            <div id="triadSummary" class="summary-block">
+                <p class="section-kicker triad-kicker">Overlay</p>
+                <h2 id="triadTitle">G major triad</h2>
+                <div id="triadNotes" class="note-chips triad-chips" aria-label="Triad notes"></div>
+            </div>
+
             <div class="legend" aria-label="Fretboard legend">
-                <span><i class="legend-dot root-dot"></i> Root</span>
+                <span><i class="legend-dot root-dot"></i> Scale root</span>
                 <span><i class="legend-dot scale-dot"></i> Scale tone</span>
+                <span><i class="legend-dot triad-dot"></i> Triad overlay</span>
             </div>
         </section>
 
@@ -101,15 +169,15 @@
                 <div id="fretboard" class="fretboard"></div>
             </div>
 
-            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Rotate your phone for a wider view.</p>
+            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Interval labels are measured from the selected scale root, where the root is <strong>1</strong>.</p>
         </section>
 
-        <section class="next-card">
+        <section class="tip-card">
             <div class="next-icon" aria-hidden="true">♬</div>
             <div>
-                <p class="section-kicker">Next step</p>
-                <h2>Triad overlays</h2>
-                <p>This first version focuses on getting the fretboard and pentatonic display right. Triads, inversions, and overlapping shapes come next.</p>
+                <p class="section-kicker">Try this</p>
+                <h2>See what the pentatonic leaves out</h2>
+                <p>Keep G major pentatonic as the primary layer, then change the overlay to C major or D major. The translucent layer reveals chord tones that are not part of the pentatonic.</p>
             </div>
         </section>
 
