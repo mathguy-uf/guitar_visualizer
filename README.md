@@ -1,17 +1,22 @@
 # Guitar Visualizer
 
-A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, triads, intervals, inversions, chord shapes, and voice leading.
+A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.6.1
+## Version 0.7
 
 Current features include:
 
 - Major and minor pentatonic scales in all 12 keys
 - Full major and natural minor scales in all 12 keys
+- Optional blue-note control on the primary layer
+- Major-family blue note: `♭3`
+- Minor-family blue note: `♭5`
+- Distinct cyan dashed marker for the blue note
+- Flat spelling for blue notes where appropriate, such as `D♭` rather than `C♯`
 - Note-name or scale-interval marker labels
 - Interval labels measured from the selected scale root (`1`)
 - Solid primary scale layer with a translucent secondary triad layer
-- Larger translucent halo when a scale tone and triad tone overlap
+- Larger translucent halo when a primary tone and triad tone overlap
 - Major, minor, diminished, and augmented triads
 - Real three-string triad voicings rather than every chord tone on the neck
 - Selectable string sets: 1–3, 2–4, 3–5, 4–6, or all sets
@@ -21,18 +26,37 @@ Current features include:
 - Clickable progression chord buttons
 - Automatic nearest-voicing selection to reduce hand movement between chords
 - Independent secondary-layer visibility while progression mode is active
-- String-set and inversion controls remain usable with progression mode active
 - 12, 15, or 24 fret views
-- Phone-first portrait layout with compact two-column controls
+- Phone-first portrait layout with compact controls
 - Landscape playing view with a wider fretboard and reduced screen clutter
 - Horizontal fretboard scrolling on narrow screens
 - iPhone safe-area support and touch-friendly controls
+
+## Blue note
+
+The **Blue note** switch is part of the primary layer.
+
+For major-family scales, it adds the `♭3`. For example, G major pentatonic becomes:
+
+```text
+G A B♭ B D E
+1 2 ♭3 3 5 6
+```
+
+For minor-family scales, it adds the classic `♭5`. For example, G minor pentatonic becomes:
+
+```text
+G B♭ C D♭ D F
+1 ♭3 4 ♭5 5 ♭7
+```
+
+The blue note is shown with a cyan dashed marker so it remains visually distinct from ordinary scale tones and from the translucent purple triad layer.
 
 ## Layer model
 
 The fretboard uses two visual layers:
 
-1. **Primary layer:** the selected pentatonic, major, or natural-minor scale, shown as solid markers.
+1. **Primary layer:** the selected pentatonic, major, or natural-minor scale, optionally including the blue note.
 2. **Secondary layer:** optional translucent three-string triad voicings.
 
 When the two layers occupy the same fret/string position, the translucent secondary marker becomes larger so it remains visible as a halo around the primary marker.
@@ -47,15 +71,13 @@ G D Em C
 
 Then load the progression and use **Previous** or **Next**. Progression mode determines which chord is current, while the **Secondary → Show** switch independently controls whether that chord voicing is visible.
 
-This means you can hide the secondary layer, step through the progression while viewing only the primary scale, and reveal the current chord again at any time. The string-set and inversion controls remain available while progression mode is active. Triad root and quality are supplied by the progression and are therefore locked until progression mode is turned off.
-
 The app continues calculating the recommended voicing even while the secondary layer is hidden, so voice-leading continuity is preserved when the overlay is shown again.
 
 Supported triad notation includes examples such as `G`, `Em`, `B♭`, `F♯m`, `C°`, and `A+`.
 
 ## Mobile layout
 
-In portrait orientation, controls are condensed into a two-column phone layout and the fretboard remains horizontally scrollable.
+In portrait orientation, controls are condensed into a phone-friendly layout and the fretboard remains horizontally scrollable.
 
 Turn the phone sideways to switch automatically into the landscape playing layout. The interface reduces descriptive text and summary detail, widens the fretboard cells, and gives the neck more of the available screen.
 
