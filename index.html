@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.6.1">
+    <link rel="stylesheet" href="style.css?v=0.7">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -50,23 +50,15 @@
             cursor: pointer;
         }
         .progression-entry button,
-        .progression-nav button {
-            padding: 0 14px;
-        }
-        .progression-nav button:disabled {
-            opacity: 0.4;
-            cursor: default;
-        }
+        .progression-nav button { padding: 0 14px; }
+        .progression-nav button:disabled { opacity: 0.4; cursor: default; }
         .progression-chips {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 14px;
         }
-        .progression-chip {
-            min-width: 48px;
-            padding: 0 12px;
-        }
+        .progression-chip { min-width: 48px; padding: 0 12px; }
         .progression-chip.active {
             background: rgba(52, 211, 153, 0.18);
             border-color: #34d399;
@@ -87,22 +79,35 @@
             line-height: 1.45;
         }
         .progression-status,
-        .progression-help {
-            color: var(--muted);
-        }
-        .progression-error {
-            margin-top: 10px;
-            color: #fecaca;
-        }
-        .progression-mode-label {
-            color: #6ee7b7;
-        }
+        .progression-help { color: var(--muted); }
+        .progression-error { margin-top: 10px; color: #fecaca; }
+        .progression-mode-label { color: #6ee7b7; }
         .landscape-only { display: none; }
 
+        .blue-note-toggle {
+            align-self: end;
+            justify-content: space-between;
+            padding: 0 2px;
+        }
+        .blue-note-toggle input:checked + .switch { background: #0891b2; }
+        .blue-note-chip {
+            border-color: rgba(34, 211, 238, 0.85);
+            background: rgba(34, 211, 238, 0.14);
+            color: #a5f3fc;
+        }
+        .blue-note-dot {
+            background: #22d3ee;
+            border: 2px dashed #0e7490;
+        }
+        .scale-marker.blue-note {
+            background: #22d3ee;
+            border: 3px dashed #083344;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.24), 0 0 0 2px rgba(165, 243, 252, 0.35);
+        }
+        .marker-stack.blue-note-position .marker-label { color: #052f36; }
+
         @media (max-width: 620px) and (orientation: portrait) {
-            .app-shell {
-                padding: max(8px, env(safe-area-inset-top)) 8px max(18px, env(safe-area-inset-bottom));
-            }
+            .app-shell { padding: max(8px, env(safe-area-inset-top)) 8px max(18px, env(safe-area-inset-bottom)); }
             .hero { padding: 8px 2px 12px; gap: 8px; }
             .hero .subtitle { display: none; }
             .hero h1 { margin-bottom: 0; font-size: 1.8rem; }
@@ -124,6 +129,7 @@
             .field > span,
             .compact-toggle > span:first-child { font-size: 0.72rem; }
             select { min-height: 40px; padding-left: 9px; padding-right: 24px; border-radius: 9px; font-size: 0.78rem; }
+            .blue-note-toggle { min-height: 40px; }
             .layer-help { display: none; }
             .progression-card { margin-top: 8px; padding: 10px; border-radius: 12px; }
             .progression-heading { margin-bottom: 9px; }
@@ -186,6 +192,7 @@
             .compact-toggle > span:first-child { font-size: 0.61rem; }
             select { min-height: 34px; padding: 0 20px 0 7px; border-radius: 7px; font-size: 0.68rem; }
             .compact-toggle { min-height: 32px; }
+            .blue-note-toggle { min-height: 34px; }
             .progression-card { margin-top: 6px; padding: 7px 9px; border-radius: 10px; }
             .progression-heading { margin-bottom: 5px; }
             .progression-heading .layer-label { display: none; }
@@ -227,17 +234,14 @@
             <div>
                 <p class="eyebrow">FRETBOARD TRAINER</p>
                 <h1>Guitar Visualizer</h1>
-                <p class="subtitle">Use a scale as the primary layer, then move real triad voicings through chord progressions while seeing how they connect across the neck.</p>
+                <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.6.1">v0.6.1</div>
+            <div class="version-badge" aria-label="Version 0.7">v0.7</div>
         </header>
 
         <section class="control-panel" aria-labelledby="controls-heading">
             <div class="section-heading">
-                <div>
-                    <p class="section-kicker">Build your view</p>
-                    <h2 id="controls-heading">Fretboard layers</h2>
-                </div>
+                <div><p class="section-kicker">Build your view</p><h2 id="controls-heading">Fretboard layers</h2></div>
                 <button id="resetButton" class="secondary-button" type="button">Reset to G</button>
             </div>
 
@@ -245,10 +249,7 @@
                 <section class="layer-card primary-layer" aria-labelledby="primary-layer-heading">
                     <div class="layer-title-row">
                         <span class="layer-swatch scale-swatch" aria-hidden="true"></span>
-                        <div>
-                            <p class="layer-label">Primary layer</p>
-                            <h3 id="primary-layer-heading">Scale</h3>
-                        </div>
+                        <div><p class="layer-label">Primary layer</p><h3 id="primary-layer-heading">Scale</h3></div>
                     </div>
                     <div class="controls-grid primary-grid">
                         <label class="field"><span>Key</span><select id="keySelect" aria-label="Select key">
@@ -259,7 +260,9 @@
                         </select></label>
                         <label class="field"><span>Marker labels</span><select id="labelModeSelect" aria-label="Choose marker label style"><option value="notes" selected>Note names</option><option value="intervals">Scale intervals</option></select></label>
                         <label class="field"><span>Fret range</span><select id="fretSelect" aria-label="Select fret range"><option value="12" selected>0–12</option><option value="15">0–15</option><option value="24">0–24</option></select></label>
+                        <label class="compact-toggle blue-note-toggle"><span id="blueNoteLabel">Blue note · ♭3</span><input id="blueNoteToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
                     </div>
+                    <p class="layer-help">Major-family scales add the ♭3; minor-family scales add the ♭5. The blue note is shown with a cyan dashed marker.</p>
                 </section>
 
                 <section class="layer-card overlay-layer" aria-labelledby="overlay-layer-heading">
@@ -304,7 +307,12 @@
         <section class="scale-summary" aria-live="polite">
             <div class="summary-block"><p class="section-kicker">Primary</p><h2 id="scaleTitle">G major pentatonic</h2><div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div></div>
             <div id="triadSummary" class="summary-block"><p class="section-kicker triad-kicker">Secondary</p><h2 id="triadTitle">G major triad</h2><p id="triadMeta" class="summary-meta"></p><div id="triadNotes" class="note-chips triad-chips" aria-label="Triad notes"></div></div>
-            <div class="legend" aria-label="Fretboard legend"><span><i class="legend-dot root-dot"></i> Scale root</span><span><i class="legend-dot scale-dot"></i> Scale tone</span><span><i class="legend-dot triad-dot"></i> Translucent triad</span></div>
+            <div class="legend" aria-label="Fretboard legend">
+                <span><i class="legend-dot root-dot"></i> Scale root</span>
+                <span><i class="legend-dot scale-dot"></i> Scale tone</span>
+                <span><i class="legend-dot blue-note-dot"></i> Blue note</span>
+                <span><i class="legend-dot triad-dot"></i> Translucent triad</span>
+            </div>
         </section>
 
         <section class="fretboard-card" aria-labelledby="fretboard-heading">
@@ -313,16 +321,16 @@
                 <p class="swipe-hint"><span class="portrait-only">Swipe • rotate ↻ for wide view</span><span class="landscape-only">Landscape view • wider fretboard</span></p>
             </div>
             <div class="fretboard-scroll" tabindex="0" aria-label="Scrollable guitar fretboard"><div id="fretboard" class="fretboard"></div></div>
-            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Turn your phone sideways for a wider playing view. The solid circle is the primary scale; a larger translucent halo means the triad and scale overlap.</p>
+            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. The cyan dashed circle is the blue note. A larger translucent purple halo means the triad and primary layer overlap.</p>
         </section>
 
         <section class="tip-card">
             <div class="next-icon" aria-hidden="true">♬</div>
-            <div><p class="section-kicker">Try this</p><h2>Hide and reveal the progression</h2><p>Load G → D → Em → C, then turn Secondary off. Step through the chords while only the scale is visible, then turn Secondary back on to reveal the current voicing.</p></div>
+            <div><p class="section-kicker">Try this</p><h2>Turn G pentatonic into a blues color</h2><p>Start with G major pentatonic and switch on Blue note to add B♭ (♭3). Switch to G minor pentatonic and the same control adds D♭ (♭5), the classic minor-blues passing tone.</p></div>
         </section>
 
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
-    <script src="script.js?v=0.6.1"></script>
+    <script src="script.js?v=0.7"></script>
 </body>
 </html>
