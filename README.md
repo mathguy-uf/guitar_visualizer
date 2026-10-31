@@ -2,7 +2,7 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.12
+## Version 0.13
 
 Current features include:
 
@@ -64,7 +64,25 @@ Open **Metronome**, choose a meter, tempo, and subdivision, then press **Start**
 
 ## Guitar tuner
 
-Open **Guitar tuner**, select **Standard** (E2 A2 D3 G3 B3 E4) or **Drop D** (D2 A2 D3 G3 B3 E4), then tap **Start tuner** and allow microphone access. Pluck one open string at a time. Automatic mode finds the closest open-string target; select a specific string when you prefer to tune against a fixed target. The display shows frequency and cents flat or sharp; within five cents is marked in tune. The last reading remains visible for four seconds after the string fades, with a “Last reading” status; a new pitch updates immediately. Changing the string or tuning clears the held reading. Tap **Stop tuner** or close the tuner to stop microphone capture. A quiet room helps; use headphones or stop the metronome while tuning. This feature requires microphone permission and HTTPS (or localhost).
+Open **Guitar tuner**, select **Standard** (E2 A2 D3 G3 B3 E4) or **Drop D** (D2 A2 D3 G3 B3 E4), then tap **Start tuner** and allow microphone access. Pluck one open string at a time. Automatic mode finds the closest open-string target; select a specific string when you prefer to tune against a fixed target.
+
+**Practice** uses a forgiving ±10-cent in-tune window; **Fine** uses ±5 cents. The reading panel turns green with a short confirmation glow when in tune; amber means close and the text explains whether to tighten or loosen. A two-cent exit margin prevents flicker near the boundary. The green region on the meter shows the selected tolerance. Reduced-motion preferences disable the glow animation.
+
+The detector analyzes approximately every 75 ms and accepts quieter notes while rejecting unclear/noisy input. A short three-reading median reduces jitter without locking the needle; after a gap or a string change the new pitch starts a fresh history. After 300 ms without a clear pitch, the old reading dims and loses its green confirmation. It remains visible for up to four seconds, labeled **Last reading**, so it cannot be mistaken for a live measurement. A fresh pluck updates immediately. Changing the string, tuning, or tolerance clears the held reading.
+
+Tap **Stop tuner** or close the tuner to stop microphone capture. A quiet room helps; use headphones or stop the metronome while tuning. This feature requires microphone permission and HTTPS (or localhost).
+
+### Tuner design references and checks
+
+The feedback and stabilization design was compared with [Trace Tuner](https://github.com/Fannon/trace-tuner) (roughly ±10-cent green zone and sustained-note tracking), [pyymenta/tuner](https://github.com/pyymenta/tuner) (smoothing and pitch-clarity gating), and [Ukulele Companion's tuner](https://github.com/baijum/ukulele-companion/blob/main/iosApp/UkuleleCompanion/ViewModels/TunerViewModel.swift) (median smoothing and string-aware reset behavior). These are references; the tuner remains dependency-free.
+
+Run the tuner regression checks with Node.js:
+
+```sh
+node --test tests/tuner.test.cjs
+```
+
+The tests cover synthetic quiet/decaying standard and Drop D notes at 44.1/48 kHz, noise rejection, pitch adjustments, tolerance settings, held/live feedback, and reset behavior. Real microphone performance still depends on the device and room.
 
 ## Blue note
 
@@ -139,6 +157,7 @@ In the repository, open **Settings → Pages** and choose:
 ## License
 
 MIT License
+
 
 
 
