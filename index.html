@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.9.1">
+    <link rel="stylesheet" href="style.css?v=0.10">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -236,7 +236,7 @@
                 <h1>Guitar Visualizer</h1>
                 <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.9">v0.9</div>
+            <div class="version-badge" aria-label="Version 0.10">v0.10</div>
         </header>
 
         <nav class="practice-modes" aria-label="Choose a learning mode">
@@ -334,6 +334,29 @@
 
         <button id="playChordButton" class="secondary-button audio-button" type="button">▶ Hear current chord</button>
 
+        <details class="metronome-card" id="metronomePanel">
+            <summary>Metronome <span class="metronome-summary">Tempo &amp; beat settings</span></summary>
+            <div class="metronome-controls">
+                <label class="field"><span>Time signature</span>
+                    <select id="metronomeMeter">
+                        <option value="2/4">2/4</option><option value="3/4">3/4</option><option value="4/4" selected>4/4</option><option value="6/8">6/8</option>
+                    </select>
+                </label>
+                <label class="field"><span>Tempo · BPM</span>
+                    <input id="metronomeBpm" type="number" min="40" max="240" step="1" value="100" inputmode="numeric">
+                </label>
+                <label class="tempo-slider"><span class="visually-hidden">Adjust tempo</span>
+                    <input id="metronomeSlider" type="range" min="40" max="240" step="1" value="100">
+                </label>
+                <label class="metronome-check"><input id="metronomeBeats" type="checkbox" checked> Beats (1, 2, 3…)</label>
+                <label class="metronome-check"><input id="metronomeOffbeats" type="checkbox"> Offbeats (the “&amp;”)</label>
+                <button id="metronomeStart" class="secondary-button metronome-start" type="button" aria-pressed="false">▶ Start</button>
+            </div>
+            <p id="metronomeDescription" class="metronome-help">In 4/4, the tempo counts quarter notes. Beat 1 is accented; the “&amp;” falls halfway between beats.</p>
+            <div id="metronomeCount" class="metronome-count" aria-hidden="true"></div>
+            <p id="metronomeStatus" class="metronome-help" role="status">Stopped.</p>
+        </details>
+
         <section class="fretboard-card" aria-labelledby="fretboard-heading">
             <div class="fretboard-heading-row">
                 <div><p class="section-kicker">Explore the neck</p><h2 id="fretboard-heading">Fretboard</h2></div>
@@ -350,8 +373,9 @@
 
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
-    <script src="script.js?v=0.9.1"></script>
+    <script src="script.js?v=0.10"></script>
 </body>
 </html>
+
 
 
