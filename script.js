@@ -84,6 +84,139 @@ const overviewColors = ["#fb7185", "#22d3ee", "#facc15", "#a3e635", "#f9a8d4", "
 let currentMode = "explore";
 let audioContext;
 
+const metronomeMeter = document.getElementById("metronomeMeter");
+const metronomeBpm = document.getElementById("metronomeBpm");
+const metronomeSlider = document.getElementById("metronomeSlider");
+const metronomeBeats = document.getElementById("metronomeBeats");
+const metronomeOffbeats = document.getElementById("metronomeOffbeats");
+const metronomeStart = document.getElementById("metronomeStart");
+const metronomeCount = document.getElementById("metronomeCount");
+const metronomeStatus = document.getElementById("metronomeStatus");
+const metronomeDescription = document.getElementById("metronomeDescription");
+let metronomeRunning = false;
+let metronomeGeneration = 0;
+let metronomeTimer = null;
+let metronomeGate = null;
+let metronomeNextTime = 0;
+let metronomeStep = 0;
+const metronomeVisualTimers = new Set();
+
+function meterPulses() { return Number(metronomeMeter.value.split("/")[0]); }
+function metronomeTempo() {
+    const n = Number(metronomeBpm.value);
+    return Number.isFinite(n) && n >= 40 && n <= 240 ? n : 100;
+}
+
+function updateMetronomeDisplay() {
+    metronomeCount.innerHTML = "";
+    for (let i = 0; i < meterPulses(); i += 1) {
+        [String(i + 1), "&"].forEach(label => {
+            const item = document.createElement("span");
+            item.textContent = label;
+            metronomeCount.appendChild(item);
+        });
+    }
+    metronomeDescription.textContent = metronomeMeter.value === "6/8"
+        ? "In 6/8, BPM counts six eighth-note pulses per bar, with accents on 1 and 4. The “&” divides each pulse into sixteenth notes."
+        : `In ${metronomeMeter.value}, BPM counts quarter notes. Beat 1 is accented; the “&” falls halfway between beats.`;
+}
+
+function metronomeClick(time, accented, offbeat) {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = "sine";
+    osc.frequency.value = offbeat ? 680 : accented ? 1400 : 950;
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(offbeat ? 0.12 : 0.2, time + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+    osc.connect(gain).connect(metronomeGate);
+    osc.start(time);
+    osc.stop(time + 0.045);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+}
+
+function scheduleMetronome() {
+    if (!metronomeRunning) return;
+    const now = audioContext.currentTime;
+    // Recover from browser throttling without playing a backlog of old clicks.
+    if (metronomeNextTime < now - 0.1) metronomeNextTime = now + 0.02;
+    while (metronomeNextTime < now + 0.1) {
+        const step = metronomeStep;
+        const offbeat = step % 2 === 1;
+        const pulse = Math.floor(step / 2);
+        const accent = pulse === 0 || (metronomeMeter.value === "6/8" && pulse === 3);
+        if (offbeat ? metronomeOffbeats.checked : metronomeBeats.checked) {
+            metronomeClick(metronomeNextTime, accent, offbeat);
+        }
+        const delay = Math.max(0, (metronomeNextTime - now) * 1000);
+        const id = setTimeout(() => {
+            metronomeVisualTimers.delete(id);
+            if (!metronomeRunning) return;
+            [...metronomeCount.children].forEach((item, index) => item.classList.toggle("current", index === step));
+        }, delay);
+        metronomeVisualTimers.add(id);
+        metronomeNextTime += 60 / metronomeTempo() / 2;
+        metronomeStep = (step + 1) % (meterPulses() * 2);
+    }
+}
+
+function stopMetronome() {
+    metronomeGeneration += 1;
+    metronomeRunning = false;
+    if (metronomeTimer !== null) clearInterval(metronomeTimer);
+    metronomeTimer = null;
+    metronomeVisualTimers.forEach(clearTimeout);
+    metronomeVisualTimers.clear();
+    if (metronomeGate) { metronomeGate.disconnect(); metronomeGate = null; }
+    metronomeStart.textContent = "▶ Start";
+    metronomeStart.setAttribute("aria-pressed", "false");
+    metronomeStatus.textContent = "Stopped.";
+    [...metronomeCount.children].forEach(item => item.classList.remove("current"));
+}
+
+async function startMetronome() {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) { metronomeStatus.textContent = "Audio is not supported in this browser."; return; }
+    const generation = ++metronomeGeneration;
+    metronomeRunning = true;
+    metronomeStart.textContent = "■ Stop";
+    metronomeStart.setAttribute("aria-pressed", "true");
+    metronomeStatus.textContent = "Starting…";
+    try {
+        audioContext ||= new Audio();
+        await audioContext.resume();
+        if (!metronomeRunning || generation !== metronomeGeneration) return;
+        metronomeGate = audioContext.createGain();
+        metronomeGate.connect(audioContext.destination);
+        metronomeStep = 0;
+        metronomeNextTime = audioContext.currentTime + 0.04;
+        metronomeStatus.textContent = "Playing. Use Stop to silence the metronome.";
+        scheduleMetronome();
+        metronomeTimer = setInterval(scheduleMetronome, 25);
+    } catch (error) {
+        if (generation === metronomeGeneration) {
+            stopMetronome();
+            metronomeStatus.textContent = "Could not start audio. Try tapping Start again.";
+        }
+    }
+}
+
+metronomeStart.addEventListener("click", () => metronomeRunning ? stopMetronome() : startMetronome());
+metronomeMeter.addEventListener("change", () => {
+    const wasRunning = metronomeRunning;
+    if (wasRunning) stopMetronome();
+    updateMetronomeDisplay();
+    if (wasRunning) startMetronome();
+});
+metronomeSlider.addEventListener("input", () => { metronomeBpm.value = metronomeSlider.value; });
+metronomeBpm.addEventListener("change", () => {
+    const n = Number(metronomeBpm.value);
+    const bpm = metronomeBpm.value.trim() === "" || !Number.isFinite(n) ? 100 : Math.min(240, Math.max(40, Math.round(n)));
+    metronomeBpm.value = String(bpm);
+    metronomeSlider.value = String(bpm);
+});
+updateMetronomeDisplay();
+
 function playNotes(midis) {
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) { soloPrompt.textContent = "Audio is not supported by this browser."; return; }
@@ -676,6 +809,7 @@ previousChordButton.addEventListener("click", () => stepProgression(-1));
 nextChordButton.addEventListener("click", () => stepProgression(1));
 
 resetButton.addEventListener("click", () => {
+    stopMetronome();
     keySelect.value = "7";
     scaleSelect.value = "majorPentatonic";
     patternSelect.value = "all";
@@ -705,5 +839,6 @@ if (typeof ResizeObserver !== "undefined") {
 } else {
     window.addEventListener("resize", drawPatternOutlines);
 }
+
 
 
