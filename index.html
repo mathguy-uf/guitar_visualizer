@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.12">
+    <link rel="stylesheet" href="style.css?v=0.13">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -236,7 +236,7 @@
                 <h1>Guitar Visualizer</h1>
                 <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.12">v0.12</div>
+            <div class="version-badge" aria-label="Version 0.13">v0.13</div>
         </header>
 
         <nav class="practice-modes" aria-label="Choose a learning mode">
@@ -342,14 +342,17 @@
                     <select id="tunerTuning"><option value="standard">Standard · E A D G B e</option><option value="dropD">Drop D · D A D G B e</option></select>
                 </label>
                 <label class="field"><span>String</span><select id="tunerString"><option value="auto">Detect automatically</option></select></label>
+                <label class="field"><span>Tolerance</span><select id="tunerTolerance"><option value="10">Practice · ±10¢</option><option value="5">Fine · ±5¢</option></select></label>
                 <button id="tunerStart" class="secondary-button metronome-start" type="button" aria-pressed="false">🎙 Start tuner</button>
             </div>
             <p id="tunerStatus" class="metronome-help" role="status">Microphone off.</p>
-            <div id="tunerDisplay" class="tuner-display" aria-live="off">
+            <div id="tunerDisplay" class="tuner-display" data-state="idle" aria-live="off">
                 <strong id="tunerNote">—</strong><span id="tunerFrequency">Play an open string</span>
-                <div class="tuner-meter" aria-hidden="true"><i id="tunerNeedle"></i></div>
+                <div class="tuner-meter" aria-hidden="true"><span class="tuner-in-tune-zone"></span><i id="tunerNeedle"></i></div>
+                <div class="tuner-meter-labels" aria-hidden="true"><span>Flat −50¢</span><span>0</span><span>+50¢ Sharp</span></div>
                 <span id="tunerFeedback">Flat ← &nbsp; In tune &nbsp; → Sharp</span>
             </div>
+            <p class="metronome-help">Green means in tune. A dimmed reading is held from the last pluck; pluck again for a live check.</p>
         </details>
 
         <details class="metronome-card" id="metronomePanel">
@@ -396,9 +399,10 @@
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
     <script src="script.js?v=0.12"></script>
-    <script src="tuner.js?v=0.12.1"></script>
+    <script src="tuner.js?v=0.13"></script>
 </body>
 </html>
+
 
 
 
