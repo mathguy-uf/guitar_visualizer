@@ -446,6 +446,7 @@ select:disabled {
 }
 
 .fretboard {
+    position: relative;
     --cell-width: 54px;
     --label-width: 44px;
     display: grid;
@@ -457,6 +458,24 @@ select:disabled {
     background: #d8c6a1;
     color: #111827;
 }
+
+.pattern-outlines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.pattern-outline-shadow, .pattern-outline-dash {
+    fill: none;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+.pattern-outline-shadow { stroke: #1c2635; stroke-width: 5; opacity: .8; }
+.pattern-outline-dash { stroke: #fff5a8; stroke-width: 2.5; stroke-dasharray: 7 6; }
 
 .fret-row,
 .fret-number-row {
@@ -747,3 +766,4 @@ footer {
         transition: none !important;
     }
 }
+
