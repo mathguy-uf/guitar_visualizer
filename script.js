@@ -85,6 +85,7 @@ let currentMode = "explore";
 let audioContext;
 
 const metronomeMeter = document.getElementById("metronomeMeter");
+const metronomeSubdivision = document.getElementById("metronomeSubdivision");
 const metronomeBpm = document.getElementById("metronomeBpm");
 const metronomeSlider = document.getElementById("metronomeSlider");
 const metronomeBeats = document.getElementById("metronomeBeats");
@@ -100,25 +101,61 @@ let metronomeGate = null;
 let metronomeNextTime = 0;
 let metronomeStep = 0;
 const metronomeVisualTimers = new Set();
+const metronomePatterns = new Map();
+let metronomePattern = [];
 
 function meterPulses() { return Number(metronomeMeter.value.split("/")[0]); }
+function metronomeDivisions() { return Number(metronomeSubdivision.value); }
 function metronomeTempo() {
     const n = Number(metronomeBpm.value);
     return Number.isFinite(n) && n >= 40 && n <= 240 ? n : 100;
 }
 
+function syncMetronomeSelection() {
+    [...metronomeCount.querySelectorAll("button")].forEach((button, index) => {
+        button.setAttribute("aria-pressed", String(metronomePattern[index]));
+    });
+    const updateGroup = (control, values) => {
+        const selected = values.filter(Boolean).length;
+        control.checked = selected === values.length;
+        control.indeterminate = selected > 0 && selected < values.length;
+    };
+    updateGroup(metronomeBeats, metronomePattern.filter((_, i) => i % metronomeDivisions() === 0));
+    updateGroup(metronomeOffbeats, metronomePattern.filter((_, i) => i % metronomeDivisions() !== 0));
+}
+
 function updateMetronomeDisplay() {
+    const divisions = metronomeDivisions();
+    const key = `${metronomeMeter.value}:${divisions}`;
+    if (!metronomePatterns.has(key)) {
+        metronomePatterns.set(key, Array.from({length: meterPulses() * divisions}, (_, i) => divisions === 3 || i % divisions === 0));
+    }
+    metronomePattern = metronomePatterns.get(key);
     metronomeCount.innerHTML = "";
     for (let i = 0; i < meterPulses(); i += 1) {
-        [String(i + 1), "&"].forEach(label => {
-            const item = document.createElement("span");
+        const group = document.createElement("div");
+        group.className = "metronome-beat-group";
+        (divisions === 2 ? [String(i + 1), "&"] : [String(i + 1), "trip", "let"]).forEach((label, part) => {
+            const index = i * divisions + part;
+            const item = document.createElement("button");
+            item.type = "button";
             item.textContent = label;
-            metronomeCount.appendChild(item);
+            item.setAttribute("aria-label", part === 0 ? `Beat ${i + 1}` : `Beat ${i + 1}, ${label}`);
+            item.addEventListener("click", () => {
+                metronomePattern[index] = !metronomePattern[index];
+                syncMetronomeSelection();
+            });
+            group.appendChild(item);
         });
+        metronomeCount.appendChild(group);
     }
-    metronomeDescription.textContent = metronomeMeter.value === "6/8"
-        ? "In 6/8, BPM counts six eighth-note pulses per bar, with accents on 1 and 4. The “&” divides each pulse into sixteenth notes."
-        : `In ${metronomeMeter.value}, BPM counts quarter notes. Beat 1 is accented; the “&” falls halfway between beats.`;
+    syncMetronomeSelection();
+    const pulse = metronomeMeter.value === "6/8"
+        ? "In 6/8, BPM counts six eighth-note pulses; 1 and 4 are accented."
+        : `In ${metronomeMeter.value}, BPM counts quarter notes; beat 1 is accented.`;
+    metronomeDescription.textContent = pulse + (divisions === 2
+        ? " The “&” is halfway between pulses."
+        : " “1 trip let” divides each pulse into three equal parts.");
 }
 
 function metronomeClick(time, accented, offbeat) {
@@ -142,21 +179,22 @@ function scheduleMetronome() {
     if (metronomeNextTime < now - 0.1) metronomeNextTime = now + 0.02;
     while (metronomeNextTime < now + 0.1) {
         const step = metronomeStep;
-        const offbeat = step % 2 === 1;
-        const pulse = Math.floor(step / 2);
+        const divisions = metronomeDivisions();
+        const offbeat = step % divisions !== 0;
+        const pulse = Math.floor(step / divisions);
         const accent = pulse === 0 || (metronomeMeter.value === "6/8" && pulse === 3);
-        if (offbeat ? metronomeOffbeats.checked : metronomeBeats.checked) {
+        if (metronomePattern[step]) {
             metronomeClick(metronomeNextTime, accent, offbeat);
         }
         const delay = Math.max(0, (metronomeNextTime - now) * 1000);
         const id = setTimeout(() => {
             metronomeVisualTimers.delete(id);
             if (!metronomeRunning) return;
-            [...metronomeCount.children].forEach((item, index) => item.classList.toggle("current", index === step));
+            [...metronomeCount.querySelectorAll("button")].forEach((item, index) => item.classList.toggle("current", index === step));
         }, delay);
         metronomeVisualTimers.add(id);
-        metronomeNextTime += 60 / metronomeTempo() / 2;
-        metronomeStep = (step + 1) % (meterPulses() * 2);
+        metronomeNextTime += 60 / metronomeTempo() / divisions;
+        metronomeStep = (step + 1) % (meterPulses() * divisions);
     }
 }
 
@@ -171,7 +209,7 @@ function stopMetronome() {
     metronomeStart.textContent = "▶ Start";
     metronomeStart.setAttribute("aria-pressed", "false");
     metronomeStatus.textContent = "Stopped.";
-    [...metronomeCount.children].forEach(item => item.classList.remove("current"));
+    [...metronomeCount.querySelectorAll("button")].forEach(item => item.classList.remove("current"));
 }
 
 async function startMetronome() {
@@ -202,11 +240,21 @@ async function startMetronome() {
 }
 
 metronomeStart.addEventListener("click", () => metronomeRunning ? stopMetronome() : startMetronome());
-metronomeMeter.addEventListener("change", () => {
+function changeMetronomePattern() {
     const wasRunning = metronomeRunning;
     if (wasRunning) stopMetronome();
     updateMetronomeDisplay();
     if (wasRunning) startMetronome();
+}
+metronomeMeter.addEventListener("change", changeMetronomePattern);
+metronomeSubdivision.addEventListener("change", changeMetronomePattern);
+[metronomeBeats, metronomeOffbeats].forEach((control, group) => {
+    control.addEventListener("change", () => {
+        metronomePattern.forEach((_, index) => {
+            if ((index % metronomeDivisions() === 0) === (group === 0)) metronomePattern[index] = control.checked;
+        });
+        syncMetronomeSelection();
+    });
 });
 metronomeSlider.addEventListener("input", () => { metronomeBpm.value = metronomeSlider.value; });
 metronomeBpm.addEventListener("change", () => {
@@ -839,6 +887,7 @@ if (typeof ResizeObserver !== "undefined") {
 } else {
     window.addEventListener("resize", drawPatternOutlines);
 }
+
 
 
 
