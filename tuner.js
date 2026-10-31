@@ -18,6 +18,8 @@ let tunerAudio = null;
 let tunerFrame = null;
 let tunerGeneration = 0;
 let tunerActive = false;
+const TUNER_READING_HOLD_MS = 4000;
+let tunerLastPitchAt = null;
 
 function tunerTargetFrequency(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
 
@@ -76,10 +78,26 @@ function populateTunerStrings() {
 }
 
 function resetTunerDisplay() {
+    tunerLastPitchAt = null;
     tunerNote.textContent = "—";
     tunerFrequency.textContent = "Play an open string";
     tunerFeedback.textContent = "Flat ←   In tune   → Sharp";
     tunerNeedle.style.display = "none";
+}
+
+// Brief detection gaps are normal as a plucked string decays. Keep the last
+// reading visible, but accept a fresh pitch immediately rather than locking it.
+function updateTunerReading(pitch, time) {
+    let status = "Listening. Pluck one open string.";
+    if (pitch) {
+        tunerLastPitchAt = time;
+        displayTunerPitch(pitch);
+    } else if (tunerLastPitchAt !== null && time - tunerLastPitchAt <= TUNER_READING_HOLD_MS) {
+        if (time - tunerLastPitchAt >= 450) status = "Last reading — pluck again to update.";
+    } else {
+        resetTunerDisplay();
+    }
+    if (tunerStatus.textContent !== status) tunerStatus.textContent = status;
 }
 
 function displayTunerPitch(frequency) {
@@ -142,8 +160,7 @@ async function startTuner() {
             if (time - last >= 150) {
                 analyser.getFloatTimeDomainData(buffer);
                 const pitch = detectTunerPitch(buffer, tunerAudio.sampleRate);
-                if (pitch) displayTunerPitch(pitch);
-                else resetTunerDisplay();
+                updateTunerReading(pitch, time);
                 last = time;
             }
             tunerFrame = requestAnimationFrame(listen);
@@ -162,3 +179,4 @@ tunerString.addEventListener("change", resetTunerDisplay);
 tunerPanel.addEventListener("toggle", () => { if (!tunerPanel.open && tunerActive) stopTuner(); });
 window.addEventListener("pagehide", stopTuner);
 populateTunerStrings();
+
