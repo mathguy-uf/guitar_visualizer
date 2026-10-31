@@ -2,10 +2,15 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.8
+## Version 0.9
 
 Current features include:
 
+- Explore, Learn triads, and Solo practice modes with collapsible settings
+- Select one triad shape, all shapes of the current chord, or a progression chord-tone overview
+- Chord-relative interval labels, alongside note names and scale intervals
+- A selectable five-position practice area and prompts for targeting chord tones
+- Tap displayed notes or play the current chord to hear synthesized audio
 - Major and minor pentatonic scales in all 12 keys
 - Selectable 3–2 major and 2–3 minor pentatonic paths, starting at a low-E root
 - Full major and natural minor scales in all 12 keys
@@ -38,6 +43,14 @@ Current features include:
 Choose a major or minor pentatonic scale, then select **3–2 major / 2–3 minor** under Pentatonic view. The path begins at the selected root on the low E string. The major version plays three successive scale tones on the first string and two on the next, repeating across the neck; the minor version uses two, then three. The pattern follows standard tuning, including the B string shift.
 
 For example, G major begins at low E frets 3–5–7, then A frets 5–7. A minor begins at low E frets 5–8, then A frets 5–7–10. Choose the next low E root to move the path up an octave. Notes beyond the selected fret range are not shown; select a larger range when needed. The blue note is temporarily hidden in this view, while the triad overlay remains independent. Return to **All scale notes** for the complete scale.
+
+## Learning and solo practice
+
+Use **Explore**, **Learn triads**, or **Solo practice** to set up a starting view. Open **Scale & triad settings** for key, scale, labels, practice area, string set, inversion, and shape controls. A practice area limits the visible notes and requires complete triad shapes to fit within it. Expand the area or change the string set if no shapes appear.
+
+In Solo practice, load a progression, then use its chord buttons or Previous and Next. The prompt suggests chord tones to target. Choose **Chord intervals** for labels measured from the current chord root; other notes are also labeled by their interval from that root. **Choose one shape** shows a selectable voicing; **All shapes of current chord** shows all matching voicings. **Progression chord-tone overview** adds colored dots for every chord tone across the displayed area, including tones outside the selected scale. Dots indicate note membership, not simultaneous playable shapes. The legend identifies each chord; colors repeat if there are more than eight entries.
+
+Tap a displayed fretboard marker to hear its pitch, or tap **Hear current chord** to hear a synthesized arpeggio. Audio begins only after a tap and uses the browser's Web Audio support. The app does not provide a backing track.
 
 ## Blue note
 
@@ -112,3 +125,4 @@ In the repository, open **Settings → Pages** and choose:
 ## License
 
 MIT License
+
