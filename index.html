@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.7">
+    <link rel="stylesheet" href="style.css?v=0.8">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -236,7 +236,7 @@
                 <h1>Guitar Visualizer</h1>
                 <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.7">v0.7</div>
+            <div class="version-badge" aria-label="Version 0.8">v0.8</div>
         </header>
 
         <section class="control-panel" aria-labelledby="controls-heading">
@@ -260,8 +260,11 @@
                         </select></label>
                         <label class="field"><span>Marker labels</span><select id="labelModeSelect" aria-label="Choose marker label style"><option value="notes" selected>Note names</option><option value="intervals">Scale intervals</option></select></label>
                         <label class="field"><span>Fret range</span><select id="fretSelect" aria-label="Select fret range"><option value="12" selected>0–12</option><option value="15">0–15</option><option value="24">0–24</option></select></label>
+                        <label class="field"><span>Pentatonic view</span><select id="patternSelect" aria-label="Choose pentatonic view"><option value="all">All scale notes</option><option value="pattern">3–2 major / 2–3 minor</option></select></label>
+                        <label class="field"><span>Pattern position</span><select id="patternPositionSelect" aria-label="Choose pattern starting position"><option value="0">First low E root</option><option value="12">Next low E root (+12)</option></select></label>
                         <label class="compact-toggle blue-note-toggle"><span id="blueNoteLabel">Blue note · ♭3</span><input id="blueNoteToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
                     </div>
+                    <p id="patternHelp" role="status" style="color: var(--muted); font-size: 0.78rem; line-height: 1.45; margin: 10px 0 0;"></p>
                     <p class="layer-help">Major-family scales add the ♭3; minor-family scales add the ♭5. The blue note is shown with a cyan dashed marker.</p>
                 </section>
 
@@ -331,6 +334,6 @@
 
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
-    <script src="script.js?v=0.7"></script>
+    <script src="script.js?v=0.8"></script>
 </body>
 </html>
