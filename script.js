@@ -413,6 +413,53 @@ function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad, stringSetK
     });
 }
 
+// Enclose each pair with a stepped outline that follows the two rows of notes.
+// Coordinates are measured from rendered cells so the lines scale with the
+// fretboard in both phone orientations and scroll along with it.
+function patternOutlinePath(upper, lower, width, height) {
+    const padX = 21;
+    const padY = 22;
+    const left = row => Math.max(1, Math.min(...row.map(p => p.x)) - padX);
+    const right = row => Math.min(width - 1, Math.max(...row.map(p => p.x)) + padX);
+    const top = Math.max(1, upper[0].y - padY);
+    const bottom = Math.min(height - 1, lower[0].y + padY);
+    const mid = (upper[0].y + lower[0].y) / 2;
+    const ul = left(upper), ur = right(upper), ll = left(lower), lr = right(lower);
+    return `M ${ul} ${top} H ${ur} V ${mid} H ${lr} V ${bottom} H ${ll} V ${mid} H ${ul} Z`;
+}
+
+function drawPatternOutlines() {
+    const old = fretboard.querySelector(".pattern-outlines");
+    if (old) old.remove();
+    if (patternSelect.value !== "pattern" || !scaleSelect.value.endsWith("Pentatonic")) return;
+    const rect = fretboard.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "pattern-outlines");
+    svg.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
+    svg.setAttribute("aria-hidden", "true");
+    const counts = scaleSelect.value === "majorPentatonic" ? [3, 2, 3, 2, 3, 2] : [2, 3, 2, 3, 2, 3];
+    for (let pair = 0; pair < 3; pair += 1) {
+        const lowerIndex = 5 - pair * 2;
+        const upperIndex = lowerIndex - 1;
+        const coordinates = stringIndex => [...fretboard.querySelectorAll(`[data-pattern-string="${stringIndex}"]`)].map(cell => {
+            const r = cell.getBoundingClientRect();
+            return { x: r.left + r.width / 2 - rect.left, y: r.top + r.height / 2 - rect.top };
+        });
+        const lower = coordinates(lowerIndex), upper = coordinates(upperIndex);
+        // Do not imply that a clipped or filtered fragment is the full shape.
+        if (lower.length !== counts[pair * 2] || upper.length !== counts[pair * 2 + 1]) continue;
+        const pathData = patternOutlinePath(upper, lower, rect.width, rect.height);
+        ["pattern-outline-shadow", "pattern-outline-dash"].forEach(className => {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pathData);
+            path.setAttribute("class", className);
+            svg.appendChild(path);
+        });
+    }
+    fretboard.appendChild(svg);
+}
+
 function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMode, showTriad, triadRoot, triadQuality, stringSetKey, voicings) {
     const patternActive = patternSelect.value === "pattern" && scaleKey.endsWith("Pentatonic");
     const patternPositions = patternActive ? getPentatonicPattern(scaleRoot, scaleKey, Number(patternPositionSelect.value)) : null;
@@ -461,6 +508,7 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
                 getTriadNotes(chord.root, chord.quality).includes(note) ? index : -1).filter(index => index >= 0) : [];
             const cell = document.createElement("div");
             cell.className = "fret-cell";
+            if (patternActive && inPrimary) cell.dataset.patternString = String(stringIndex);
             if (!withinArea) cell.classList.add("outside-area");
             if (markerFrets.has(fret)) cell.classList.add("marker-fret");
             if (selectedStringIndices.has(stringIndex)) cell.classList.add("selected-triad-string");
@@ -517,6 +565,7 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
         }
         fretboard.appendChild(row);
     });
+    drawPatternOutlines();
 }
 
 function render() {
@@ -529,7 +578,7 @@ function render() {
     blueNoteToggle.disabled = patternActive;
     const includeBlueNote = blueNoteToggle.checked && !patternActive;
     patternHelp.textContent = !isPentatonic ? "Pattern view is available for pentatonic scales." : patternActive
-        ? `${scaleKey === "majorPentatonic" ? "3–2" : "2–3"}: play successive scale tones from low E to high e, repeating the note counts across each pair. The first note is the selected root on low E. Increase the fret range if the pattern extends beyond the display. Blue note is hidden in this view.`
+        ? `${scaleKey === "majorPentatonic" ? "3–2" : "2–3"}: play successive scale tones from low E to high e. Dashed outlines mark each complete two-string group. Increase the fret range or practice area if a group is cut off. Blue note is hidden in this view.`
         : "Choose a pattern to trace a path between pentatonic positions.";
     const labelMode = labelModeSelect.value;
     const maxFret = Number.parseInt(fretSelect.value, 10);
@@ -651,4 +700,10 @@ resetButton.addEventListener("click", () => {
 });
 
 setMode("explore");
+if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(drawPatternOutlines).observe(fretboard);
+} else {
+    window.addEventListener("resize", drawPatternOutlines);
+}
+
 
