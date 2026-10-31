@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.10">
+    <link rel="stylesheet" href="style.css?v=0.12">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -236,7 +236,7 @@
                 <h1>Guitar Visualizer</h1>
                 <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.10">v0.10</div>
+            <div class="version-badge" aria-label="Version 0.12">v0.12</div>
         </header>
 
         <nav class="practice-modes" aria-label="Choose a learning mode">
@@ -334,6 +334,24 @@
 
         <button id="playChordButton" class="secondary-button audio-button" type="button">▶ Hear current chord</button>
 
+        <details class="metronome-card tuner-card" id="tunerPanel">
+            <summary>Guitar tuner <span class="metronome-summary">Standard &amp; Drop D</span></summary>
+            <p class="metronome-help">Allow microphone access, then pluck one open string at a time. Use headphones or stop the metronome while tuning.</p>
+            <div class="metronome-controls">
+                <label class="field"><span>Tuning</span>
+                    <select id="tunerTuning"><option value="standard">Standard · E A D G B e</option><option value="dropD">Drop D · D A D G B e</option></select>
+                </label>
+                <label class="field"><span>String</span><select id="tunerString"><option value="auto">Detect automatically</option></select></label>
+                <button id="tunerStart" class="secondary-button metronome-start" type="button" aria-pressed="false">🎙 Start tuner</button>
+            </div>
+            <p id="tunerStatus" class="metronome-help" role="status">Microphone off.</p>
+            <div id="tunerDisplay" class="tuner-display" aria-live="off">
+                <strong id="tunerNote">—</strong><span id="tunerFrequency">Play an open string</span>
+                <div class="tuner-meter" aria-hidden="true"><i id="tunerNeedle"></i></div>
+                <span id="tunerFeedback">Flat ← &nbsp; In tune &nbsp; → Sharp</span>
+            </div>
+        </details>
+
         <details class="metronome-card" id="metronomePanel">
             <summary>Metronome <span class="metronome-summary">Tempo &amp; beat settings</span></summary>
             <div class="metronome-controls">
@@ -345,15 +363,19 @@
                 <label class="field"><span>Tempo · BPM</span>
                     <input id="metronomeBpm" type="number" min="40" max="240" step="1" value="100" inputmode="numeric">
                 </label>
+                <label class="field"><span>Subdivisions</span>
+                    <select id="metronomeSubdivision"><option value="2">Even: 1 &amp;</option><option value="3">Triplets: 1 trip let</option></select>
+                </label>
                 <label class="tempo-slider"><span class="visually-hidden">Adjust tempo</span>
                     <input id="metronomeSlider" type="range" min="40" max="240" step="1" value="100">
                 </label>
-                <label class="metronome-check"><input id="metronomeBeats" type="checkbox" checked> Beats (1, 2, 3…)</label>
-                <label class="metronome-check"><input id="metronomeOffbeats" type="checkbox"> Offbeats (the “&amp;”)</label>
+                <label class="metronome-check"><input id="metronomeBeats" type="checkbox" checked> All numbered beats</label>
+                <label class="metronome-check"><input id="metronomeOffbeats" type="checkbox"> All subdivisions</label>
                 <button id="metronomeStart" class="secondary-button metronome-start" type="button" aria-pressed="false">▶ Start</button>
             </div>
             <p id="metronomeDescription" class="metronome-help">In 4/4, the tempo counts quarter notes. Beat 1 is accented; the “&amp;” falls halfway between beats.</p>
-            <div id="metronomeCount" class="metronome-count" aria-hidden="true"></div>
+            <p class="metronome-help">Tap a count to turn it on or off. Gold counts sound; the teal outline follows the rhythm.</p>
+            <div id="metronomeCount" class="metronome-count" role="group" aria-label="Choose which counts sound"></div>
             <p id="metronomeStatus" class="metronome-help" role="status">Stopped.</p>
         </details>
 
@@ -373,9 +395,11 @@
 
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
-    <script src="script.js?v=0.10"></script>
+    <script src="script.js?v=0.12"></script>
+    <script src="tuner.js?v=0.12"></script>
 </body>
 </html>
+
 
 
 
