@@ -2,11 +2,12 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.10
+## Version 0.12
 
 Current features include:
 
-- Metronome with adjustable 40–240 BPM, 2/4, 3/4, 4/4, and 6/8; independently selectable beat and offbeat clicks
+- Metronome with adjustable 40–240 BPM, 2/4, 3/4, 4/4, and 6/8; even or triplet subdivisions and individually selectable clicks
+- Microphone guitar tuner for standard tuning and Drop D, with automatic or manual string selection
 - Explore, Learn triads, and Solo practice modes with collapsible settings
 - Select one triad shape, all shapes of the current chord, or a progression chord-tone overview
 - Chord-relative interval labels, alongside note names and scale intervals
@@ -57,7 +58,13 @@ Tap a displayed fretboard marker to hear its pitch, or tap **Hear current chord*
 
 ## Metronome
 
-Open **Metronome**, choose a meter and tempo, then press **Start**. **Beats** controls the numbered pulses; **Offbeats** controls the “&” halfway between pulses. Either or both can be turned off while the count continues. Beat 1 is accented; in 6/8, pulses 1 and 4 are accented. In 2/4, 3/4, and 4/4, BPM counts quarter notes and the offbeats are eighth notes. In 6/8, BPM counts eighth-note pulses and the offbeats are sixteenth notes. Tempo can be adjusted while playing; changing meter restarts the count. **Stop** silences metronome clicks without stopping the fretboard's note sounds. Browser background throttling or device sleep may interrupt timing.
+Open **Metronome**, choose a meter, tempo, and subdivision, then press **Start**. Tap any numbered beat or subdivision to enable or mute that individual click. Gold indicates enabled clicks; a teal outline tracks the current count. The two checkboxes select or clear all numbered beats or all subdivisions; a partial check indicates a mixed selection. New even patterns start with numbered beats on and subdivisions off; new triplet patterns start with all counts on. Choices for each meter and subdivision are remembered while the page remains open.
+
+**Even** counts “1 &”; **Triplets** counts “1 trip let,” with three equal parts per pulse. Beat 1 is accented; in 6/8, pulses 1 and 4 are accented. In 2/4, 3/4, and 4/4, BPM counts quarter notes. In 6/8, BPM counts eighth-note pulses, so triplets divide each eighth-note pulse into three. Tempo can be adjusted while playing; changing meter or subdivision restarts the count. **Stop** silences metronome clicks without stopping the fretboard's note sounds. Browser background throttling or device sleep may interrupt timing.
+
+## Guitar tuner
+
+Open **Guitar tuner**, select **Standard** (E2 A2 D3 G3 B3 E4) or **Drop D** (D2 A2 D3 G3 B3 E4), then tap **Start tuner** and allow microphone access. Pluck one open string at a time. Automatic mode finds the closest open-string target; select a specific string when you prefer to tune against a fixed target. The display shows frequency and cents flat or sharp; within five cents is marked in tune. Tap **Stop tuner** or close the tuner to stop microphone capture. A quiet room helps; use headphones or stop the metronome while tuning. This feature requires microphone permission and HTTPS (or localhost).
 
 ## Blue note
 
@@ -132,6 +139,7 @@ In the repository, open **Settings → Pages** and choose:
 ## License
 
 MIT License
+
 
 
 
