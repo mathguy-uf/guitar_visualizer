@@ -18,6 +18,33 @@
     box-sizing: border-box;
 }
 
+[hidden] { display: none !important; }
+.practice-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.practice-modes button {
+    flex: 1 1 110px; min-height: 44px; border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); background: var(--panel-2); font-weight: 750;
+}
+.practice-modes button[aria-pressed="true"] { border-color: var(--accent); color: #ffe3a1; background: #3d301b; }
+.mode-description { color: var(--muted); font-size: .86rem; margin: 10px 2px; line-height: 1.4; }
+.control-panel summary { font-weight: 800; cursor: pointer; min-height: 30px; }
+.control-panel[open] summary { margin-bottom: 16px; }
+.solo-prompt { color: #d1fae5; font-size: .85rem; line-height: 1.5; margin: 12px 0 4px; }
+.overview-help { color: var(--muted); font-size: .78rem; line-height: 1.4; margin: 10px 0 4px; }
+.overview-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .8rem; margin: 6px 0; }
+.overview-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.overview-legend i, .chord-dots i { display: block; width: 9px; height: 9px; border-radius: 50%; border: 1px solid #111827; }
+.audio-button { margin: 0 0 10px; }
+.fret-cell.outside-area { opacity: .3; }
+.marker-stack { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.marker-stack:focus-visible { outline: 3px solid #fff; outline-offset: -3px; border-radius: 50%; }
+.marker-stack.overview-only .marker-label { background: #334155; }
+.chord-dots { position: absolute; z-index: 5; bottom: -1px; display: flex; flex-wrap: wrap; justify-content: center; max-width: 42px; gap: 1px; pointer-events: none; }
+@media (max-width: 620px) {
+    .practice-modes { gap: 5px; }
+    .practice-modes button { flex: 1 1 90px; font-size: .75rem; padding: 5px; }
+    .mode-description { font-size: .75rem; }
+}
+
 html {
     background: var(--bg);
 }
