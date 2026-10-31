@@ -43,6 +43,9 @@ const NATURAL_ROOTS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 const keySelect = document.getElementById("keySelect");
 const scaleSelect = document.getElementById("scaleSelect");
+const patternSelect = document.getElementById("patternSelect");
+const patternPositionSelect = document.getElementById("patternPositionSelect");
+const patternHelp = document.getElementById("patternHelp");
 const labelModeSelect = document.getElementById("labelModeSelect");
 const fretSelect = document.getElementById("fretSelect");
 const blueNoteToggle = document.getElementById("blueNoteToggle");
@@ -72,6 +75,28 @@ const fretboard = document.getElementById("fretboard");
 let progressionChords = [];
 let progressionIndex = 0;
 let progressionSelectedVoicing = null;
+
+// Walk successive pentatonic tones across adjacent string pairs, beginning
+// at a low-E root. Standard tuning's B-string offset follows from MIDI pitch.
+function getPentatonicPattern(root, scaleKey, octaveOffset) {
+    const intervals = SCALES[scaleKey].intervals;
+    const counts = scaleKey === "majorPentatonic" ? [3, 2, 3, 2, 3, 2] : [2, 3, 2, 3, 2, 3];
+    const rootFret = (root - OPEN_STRINGS[5].note + 12) % 12 + octaveOffset;
+    let lastMidi = OPEN_STRINGS[5].midi + rootFret - 1;
+    const positions = new Set();
+    for (let step = 0; step < 6; step += 1) {
+        const stringIndex = 5 - step;
+        let found = 0;
+        for (let fret = 0; fret <= 36 && found < counts[step]; fret += 1) {
+            const midi = OPEN_STRINGS[stringIndex].midi + fret;
+            if (midi <= lastMidi || !intervals.includes((midi - root + 120) % 12)) continue;
+            positions.add(`${stringIndex}:${fret}`);
+            lastMidi = midi;
+            found += 1;
+        }
+    }
+    return positions;
+}
 
 function getBlueNoteInterval(scaleKey) {
     return SCALES[scaleKey].family === "major" ? 3 : 6;
@@ -328,6 +353,8 @@ function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad, stringSetK
 }
 
 function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMode, showTriad, triadRoot, triadQuality, stringSetKey, voicings) {
+    const patternActive = patternSelect.value === "pattern" && scaleKey.endsWith("Pentatonic");
+    const patternPositions = patternActive ? getPentatonicPattern(scaleRoot, scaleKey, Number(patternPositionSelect.value)) : null;
     const baseScaleNoteSet = new Set(getScaleNotes(scaleRoot, scaleKey, false));
     const primaryNoteSet = new Set(getScaleNotes(scaleRoot, scaleKey, includeBlueNote));
     const blue = getBlueNoteInfo(scaleRoot, scaleKey);
@@ -362,9 +389,9 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
 
         for (let fret = 0; fret <= maxFret; fret += 1) {
             const note = (stringInfo.note + fret) % 12;
-            const inPrimary = primaryNoteSet.has(note);
+            const inPrimary = patternActive ? patternPositions.has(`${stringIndex}:${fret}`) : primaryNoteSet.has(note);
             const inBaseScale = baseScaleNoteSet.has(note);
-            const isBlueNote = includeBlueNote && note === blue.note && !inBaseScale;
+            const isBlueNote = inPrimary && includeBlueNote && note === blue.note && !inBaseScale;
             const inTriad = triadPositionMap.has(`${stringIndex}:${fret}`);
             const cell = document.createElement("div");
             cell.className = "fret-cell";
@@ -415,7 +442,15 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
 function render() {
     const scaleRoot = Number.parseInt(keySelect.value, 10);
     const scaleKey = scaleSelect.value;
-    const includeBlueNote = blueNoteToggle.checked;
+    const isPentatonic = scaleKey.endsWith("Pentatonic");
+    patternSelect.disabled = !isPentatonic;
+    const patternActive = isPentatonic && patternSelect.value === "pattern";
+    patternPositionSelect.disabled = !patternActive;
+    blueNoteToggle.disabled = patternActive;
+    const includeBlueNote = blueNoteToggle.checked && !patternActive;
+    patternHelp.textContent = !isPentatonic ? "Pattern view is available for pentatonic scales." : patternActive
+        ? `${scaleKey === "majorPentatonic" ? "3–2" : "2–3"}: play successive scale tones from low E to high e, repeating the note counts across each pair. The first note is the selected root on low E. Increase the fret range if the pattern extends beyond the display. Blue note is hidden in this view.`
+        : "Choose a pattern to trace a path between pentatonic positions.";
     const labelMode = labelModeSelect.value;
     const maxFret = Number.parseInt(fretSelect.value, 10);
     const progressionActive = progressionModeIsActive();
@@ -445,7 +480,7 @@ function render() {
     renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMode, showTriad, triadRoot, triadQuality, stringSetKey, displayedVoicings);
 }
 
-[keySelect, scaleSelect, labelModeSelect, fretSelect, blueNoteToggle, triadToggle, triadRootSelect, triadQualitySelect, stringSetSelect, inversionSelect]
+[keySelect, scaleSelect, patternSelect, patternPositionSelect, labelModeSelect, fretSelect, blueNoteToggle, triadToggle, triadRootSelect, triadQualitySelect, stringSetSelect, inversionSelect]
     .forEach(control => control.addEventListener("change", render));
 
 progressionToggle.addEventListener("change", () => {
@@ -465,6 +500,8 @@ nextChordButton.addEventListener("click", () => stepProgression(1));
 resetButton.addEventListener("click", () => {
     keySelect.value = "7";
     scaleSelect.value = "majorPentatonic";
+    patternSelect.value = "all";
+    patternPositionSelect.value = "0";
     labelModeSelect.value = "notes";
     fretSelect.value = "12";
     blueNoteToggle.checked = false;
