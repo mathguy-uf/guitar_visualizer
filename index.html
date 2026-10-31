@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.8">
+    <link rel="stylesheet" href="style.css?v=0.9">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -236,10 +236,17 @@
                 <h1>Guitar Visualizer</h1>
                 <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.8">v0.8</div>
+            <div class="version-badge" aria-label="Version 0.9">v0.9</div>
         </header>
 
-        <section class="control-panel" aria-labelledby="controls-heading">
+        <nav class="practice-modes" aria-label="Choose a learning mode">
+            <button type="button" data-mode="explore" aria-pressed="true">Explore</button>
+            <button type="button" data-mode="triads" aria-pressed="false">Learn triads</button>
+            <button type="button" data-mode="solo" aria-pressed="false">Solo practice</button>
+        </nav>
+        <p class="mode-description" id="modeDescription">Explore a scale and its chord shapes. Open settings to customize your view.</p>
+        <details class="control-panel" id="settingsPanel">
+            <summary>Scale &amp; triad settings</summary>
             <div class="section-heading">
                 <div><p class="section-kicker">Build your view</p><h2 id="controls-heading">Fretboard layers</h2></div>
                 <button id="resetButton" class="secondary-button" type="button">Reset to G</button>
@@ -258,8 +265,9 @@
                         <label class="field"><span>Scale</span><select id="scaleSelect" aria-label="Select scale">
                             <option value="majorPentatonic" selected>Major pentatonic · 5 notes</option><option value="minorPentatonic">Minor pentatonic · 5 notes</option><option value="majorScale">Major scale · 7 notes</option><option value="naturalMinor">Natural minor · 7 notes</option>
                         </select></label>
-                        <label class="field"><span>Marker labels</span><select id="labelModeSelect" aria-label="Choose marker label style"><option value="notes" selected>Note names</option><option value="intervals">Scale intervals</option></select></label>
+                        <label class="field"><span>Marker labels</span><select id="labelModeSelect" aria-label="Choose marker label style"><option value="notes" selected>Note names</option><option value="intervals">Scale intervals</option><option value="chord">Chord intervals</option></select></label>
                         <label class="field"><span>Fret range</span><select id="fretSelect" aria-label="Select fret range"><option value="12" selected>0–12</option><option value="15">0–15</option><option value="24">0–24</option></select></label>
+                        <label class="field"><span>Practice area</span><select id="practiceAreaSelect"><option value="all">Whole fretboard</option><option value="0">Frets 0–4</option><option value="3">Frets 3–7</option><option value="5">Frets 5–9</option><option value="7">Frets 7–11</option><option value="9">Frets 9–13</option><option value="12">Frets 12–16</option></select></label>
                         <label class="field"><span>Pentatonic view</span><select id="patternSelect" aria-label="Choose pentatonic view"><option value="all">All scale notes</option><option value="pattern">3–2 major / 2–3 minor</option></select></label>
                         <label class="field"><span>Pattern position</span><select id="patternPositionSelect" aria-label="Choose pattern starting position"><option value="0">First low E root</option><option value="12">Next low E root (+12)</option></select></label>
                         <label class="compact-toggle blue-note-toggle"><span id="blueNoteLabel">Blue note · ♭3</span><input id="blueNoteToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
@@ -283,12 +291,16 @@
                         <label class="field"><span>Quality</span><select id="triadQualitySelect" aria-label="Select triad quality"><option value="major" selected>Major</option><option value="minor">Minor</option><option value="diminished">Diminished</option><option value="augmented">Augmented</option></select></label>
                         <label class="field"><span>String set</span><select id="stringSetSelect" aria-label="Select three-string set"><option value="1-3" selected>Strings 1–3 · e B G</option><option value="2-4">Strings 2–4 · B G D</option><option value="3-5">Strings 3–5 · G D A</option><option value="4-6">Strings 4–6 · D A E</option><option value="all">All string sets</option></select></label>
                         <label class="field"><span>Inversion</span><select id="inversionSelect" aria-label="Select triad inversion"><option value="all" selected>All inversions</option><option value="root">Root position</option><option value="first">1st inversion</option><option value="second">2nd inversion</option></select></label>
+                        <label class="field"><span>Triad display</span><select id="triadViewSelect"><option value="all">All shapes of current chord</option><option value="one">Choose one shape</option><option value="overview">Progression chord-tone overview</option></select></label>
+                        <label class="field"><span>Shape</span><select id="shapeSelect" aria-label="Choose a triad shape"></select></label>
                     </div>
                     <p class="layer-help">Progression mode chooses the chord. The Show switch independently controls whether the secondary layer is visible; string set and inversion remain adjustable.</p>
                 </section>
             </div>
 
-            <section class="progression-card" aria-labelledby="progression-heading">
+        </details>
+
+            <section class="progression-card" id="progressionPanel" aria-labelledby="progression-heading">
                 <div class="progression-heading">
                     <div><p class="layer-label progression-mode-label">Practice mode</p><h3 id="progression-heading">Chord progression</h3></div>
                     <label class="compact-toggle"><span>Use</span><input id="progressionToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
@@ -304,8 +316,10 @@
                     <p id="progressionStatus" class="progression-status">Turn progression mode on to step through the chords.</p>
                     <div class="progression-nav"><button id="previousChordButton" type="button" disabled>← Previous</button><button id="nextChordButton" type="button" disabled>Next →</button></div>
                 </div>
+                <p id="soloPrompt" class="solo-prompt" aria-live="polite"></p>
+                <p id="overviewHelp" class="overview-help" hidden>Colored dots show which progression chords contain each note. They do not represent simultaneous chord shapes.</p>
+                <div id="overviewLegend" class="overview-legend"></div>
             </section>
-        </section>
 
         <section class="scale-summary" aria-live="polite">
             <div class="summary-block"><p class="section-kicker">Primary</p><h2 id="scaleTitle">G major pentatonic</h2><div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div></div>
@@ -318,13 +332,15 @@
             </div>
         </section>
 
+        <button id="playChordButton" class="secondary-button audio-button" type="button">▶ Hear current chord</button>
+
         <section class="fretboard-card" aria-labelledby="fretboard-heading">
             <div class="fretboard-heading-row">
                 <div><p class="section-kicker">Explore the neck</p><h2 id="fretboard-heading">Fretboard</h2></div>
                 <p class="swipe-hint"><span class="portrait-only">Swipe • rotate ↻ for wide view</span><span class="landscape-only">Landscape view • wider fretboard</span></p>
             </div>
             <div class="fretboard-scroll" tabindex="0" aria-label="Scrollable guitar fretboard"><div id="fretboard" class="fretboard"></div></div>
-            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. The cyan dashed circle is the blue note. A larger translucent purple halo means the triad and primary layer overlap.</p>
+            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Tap a note to hear it. Purple marks the current triad; the overview's colored dots show chord-tone membership.</p>
         </section>
 
         <section class="tip-card">
@@ -334,6 +350,7 @@
 
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
-    <script src="script.js?v=0.8"></script>
+    <script src="script.js?v=0.9"></script>
 </body>
 </html>
+
