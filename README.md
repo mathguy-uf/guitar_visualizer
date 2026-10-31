@@ -2,11 +2,12 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.7
+## Version 0.8
 
 Current features include:
 
 - Major and minor pentatonic scales in all 12 keys
+- Selectable 3–2 major and 2–3 minor pentatonic paths, starting at a low-E root
 - Full major and natural minor scales in all 12 keys
 - Optional blue-note control on the primary layer
 - Major-family blue note: `♭3`
@@ -31,6 +32,12 @@ Current features include:
 - Landscape playing view with a wider fretboard and reduced screen clutter
 - Horizontal fretboard scrolling on narrow screens
 - iPhone safe-area support and touch-friendly controls
+
+## Pentatonic 3–2 / 2–3 paths
+
+Choose a major or minor pentatonic scale, then select **3–2 major / 2–3 minor** under Pentatonic view. The path begins at the selected root on the low E string. The major version plays three successive scale tones on the first string and two on the next, repeating across the neck; the minor version uses two, then three. The pattern follows standard tuning, including the B string shift.
+
+For example, G major begins at low E frets 3–5–7, then A frets 5–7. A minor begins at low E frets 5–8, then A frets 5–7–10. Choose the next low E root to move the path up an octave. Notes beyond the selected fret range are not shown; select a larger range when needed. The blue note is temporarily hidden in this view, while the triad overlay remains independent. Return to **All scale notes** for the complete scale.
 
 ## Blue note
 
