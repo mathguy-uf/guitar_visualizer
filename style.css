@@ -38,11 +38,21 @@
 .metronome-count button[aria-pressed="true"] { color: #fef3c7; background: #544015; border-color: #f4b942; font-weight: 800; }
 .metronome-count button.current { outline: 3px solid #5eead4; outline-offset: -3px; }
 .metronome-count button:focus-visible { outline: 3px solid white; outline-offset: 2px; }
-.tuner-display { display: grid; gap: 7px; margin-top: 12px; text-align: center; color: var(--muted); font-size: .85rem; }
+.tuner-display { --tuner-tolerance: 10%; display: grid; gap: 10px; margin-top: 12px; padding: 16px 12px; border: 2px solid var(--border); border-radius: 14px; text-align: center; color: var(--muted); font-size: .85rem; transition: background-color 120ms, border-color 120ms; }
 .tuner-display strong { font-size: 1.5rem; color: var(--text); }
-.tuner-meter { position: relative; height: 16px; margin: 0 8px; border-radius: 20px; background: linear-gradient(90deg, #4c4d69, #1c6f63, #4c4d69); }
-.tuner-meter::before { content: ""; position: absolute; top: -4px; bottom: -4px; left: 50%; width: 2px; background: white; }
-.tuner-meter i { position: absolute; display: none; top: -5px; width: 4px; height: 26px; left: 50%; border-radius: 4px; background: #f4b942; transform: translateX(-50%); box-shadow: 0 0 0 1px #1c2635; }
+.tuner-meter { position: relative; height: 16px; margin: 0 8px; border-radius: 20px; background: #3f485e; }
+.tuner-in-tune-zone { position: absolute; left: calc(50% - var(--tuner-tolerance)); width: calc(var(--tuner-tolerance) * 2); top: 0; bottom: 0; background: #238463; }
+.tuner-meter::before { content: ""; position: absolute; z-index: 1; top: -4px; bottom: -4px; left: 50%; width: 2px; background: white; }
+.tuner-meter i { position: absolute; z-index: 2; display: none; top: -5px; width: 4px; height: 26px; left: 50%; border-radius: 4px; background: #f4b942; transform: translateX(-50%); box-shadow: 0 0 0 1px #1c2635; transition: left 70ms linear; }
+.tuner-meter-labels { display: flex; justify-content: space-between; gap: 8px; padding: 0 4px; font-size: .7rem; }
+.tuner-display[data-state="in-tune"] { background: #113d2e; border-color: #4ade80; color: #dcfce7; animation: tuner-confirm 450ms ease-out; }
+.tuner-display[data-state="in-tune"] strong { color: #bbf7d0; }
+.tuner-display[data-state="in-tune"] .tuner-meter i { background: #bbf7d0; }
+.tuner-display[data-state="close"] { border-color: #d6a34c; }
+.tuner-display[data-state="out"] { border-color: #e58c75; }
+.tuner-display[data-state="held"] { opacity: .6; border-style: dashed; }
+@keyframes tuner-confirm { from { box-shadow: 0 0 0 4px rgba(74, 222, 128, .35); } to { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+@media (prefers-reduced-motion: reduce) { .tuner-display { animation: none !important; transition: none; } .tuner-meter i { transition: none; } }
 .practice-modes { display: flex; flex-wrap: wrap; gap: 8px; }
 .practice-modes button {
     flex: 1 1 110px; min-height: 44px; border: 1px solid var(--border);
@@ -790,6 +800,7 @@ footer {
         transition: none !important;
     }
 }
+
 
 
 
