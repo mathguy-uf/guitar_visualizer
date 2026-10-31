@@ -19,6 +19,22 @@
 }
 
 [hidden] { display: none !important; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.metronome-card { border: 1px solid var(--border); border-radius: 16px; background: var(--panel); padding: 12px 15px; margin: 0 0 12px; }
+.metronome-card summary { cursor: pointer; font-weight: 800; min-height: 30px; }
+.metronome-summary { color: var(--muted); font-weight: 400; font-size: .8rem; margin-left: 6px; }
+.metronome-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 10px; margin-top: 12px; }
+.metronome-controls input[type="number"] { width: 100%; min-height: 44px; color: var(--text); background: #0f1d31; border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; }
+.tempo-slider { grid-column: 1 / -1; display: flex; align-items: center; }
+.tempo-slider input { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.metronome-check { display: flex; align-items: center; gap: 7px; min-height: 40px; font-size: .85rem; font-weight: 700; }
+.metronome-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.metronome-start { grid-column: 1 / -1; background: #26374b; font-weight: 800; }
+.metronome-start[aria-pressed="true"] { border-color: #34d399; background: #174536; }
+.metronome-help { margin: 10px 0 0; color: var(--muted); font-size: .78rem; line-height: 1.4; }
+.metronome-count { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.metronome-count span { min-width: 28px; text-align: center; color: var(--muted); border: 1px solid var(--border); border-radius: 7px; padding: 4px; font-size: .8rem; }
+.metronome-count span.current { background: var(--accent); color: #111827; font-weight: 800; border-color: var(--accent); }
 .practice-modes { display: flex; flex-wrap: wrap; gap: 8px; }
 .practice-modes button {
     flex: 1 1 110px; min-height: 44px; border: 1px solid var(--border);
@@ -766,4 +782,5 @@ footer {
         transition: none !important;
     }
 }
+
 
