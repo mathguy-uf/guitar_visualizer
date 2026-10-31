@@ -33,8 +33,16 @@
 .metronome-start[aria-pressed="true"] { border-color: #34d399; background: #174536; }
 .metronome-help { margin: 10px 0 0; color: var(--muted); font-size: .78rem; line-height: 1.4; }
 .metronome-count { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-.metronome-count span { min-width: 28px; text-align: center; color: var(--muted); border: 1px solid var(--border); border-radius: 7px; padding: 4px; font-size: .8rem; }
-.metronome-count span.current { background: var(--accent); color: #111827; font-weight: 800; border-color: var(--accent); }
+.metronome-beat-group { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 10px; }
+.metronome-count button { min-width: 44px; min-height: 44px; color: #a8b4c6; background: #0b1728; border: 1px solid #34445b; border-radius: 7px; padding: 4px; font-size: .8rem; cursor: pointer; }
+.metronome-count button[aria-pressed="true"] { color: #fef3c7; background: #544015; border-color: #f4b942; font-weight: 800; }
+.metronome-count button.current { outline: 3px solid #5eead4; outline-offset: -3px; }
+.metronome-count button:focus-visible { outline: 3px solid white; outline-offset: 2px; }
+.tuner-display { display: grid; gap: 7px; margin-top: 12px; text-align: center; color: var(--muted); font-size: .85rem; }
+.tuner-display strong { font-size: 1.5rem; color: var(--text); }
+.tuner-meter { position: relative; height: 16px; margin: 0 8px; border-radius: 20px; background: linear-gradient(90deg, #4c4d69, #1c6f63, #4c4d69); }
+.tuner-meter::before { content: ""; position: absolute; top: -4px; bottom: -4px; left: 50%; width: 2px; background: white; }
+.tuner-meter i { position: absolute; display: none; top: -5px; width: 4px; height: 26px; left: 50%; border-radius: 4px; background: #f4b942; transform: translateX(-50%); box-shadow: 0 0 0 1px #1c2635; }
 .practice-modes { display: flex; flex-wrap: wrap; gap: 8px; }
 .practice-modes button {
     flex: 1 1 110px; min-height: 44px; border: 1px solid var(--border);
@@ -782,5 +790,6 @@ footer {
         transition: none !important;
     }
 }
+
 
 
