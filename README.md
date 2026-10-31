@@ -64,7 +64,7 @@ Open **Metronome**, choose a meter, tempo, and subdivision, then press **Start**
 
 ## Guitar tuner
 
-Open **Guitar tuner**, select **Standard** (E2 A2 D3 G3 B3 E4) or **Drop D** (D2 A2 D3 G3 B3 E4), then tap **Start tuner** and allow microphone access. Pluck one open string at a time. Automatic mode finds the closest open-string target; select a specific string when you prefer to tune against a fixed target. The display shows frequency and cents flat or sharp; within five cents is marked in tune. Tap **Stop tuner** or close the tuner to stop microphone capture. A quiet room helps; use headphones or stop the metronome while tuning. This feature requires microphone permission and HTTPS (or localhost).
+Open **Guitar tuner**, select **Standard** (E2 A2 D3 G3 B3 E4) or **Drop D** (D2 A2 D3 G3 B3 E4), then tap **Start tuner** and allow microphone access. Pluck one open string at a time. Automatic mode finds the closest open-string target; select a specific string when you prefer to tune against a fixed target. The display shows frequency and cents flat or sharp; within five cents is marked in tune. The last reading remains visible for four seconds after the string fades, with a “Last reading” status; a new pitch updates immediately. Changing the string or tuning clears the held reading. Tap **Stop tuner** or close the tuner to stop microphone capture. A quiet room helps; use headphones or stop the metronome while tuning. This feature requires microphone permission and HTTPS (or localhost).
 
 ## Blue note
 
