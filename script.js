@@ -71,6 +71,68 @@ const triadTitle = document.getElementById("triadTitle");
 const triadMeta = document.getElementById("triadMeta");
 const triadNotes = document.getElementById("triadNotes");
 const fretboard = document.getElementById("fretboard");
+const practiceAreaSelect = document.getElementById("practiceAreaSelect");
+const triadViewSelect = document.getElementById("triadViewSelect");
+const shapeSelect = document.getElementById("shapeSelect");
+const soloPrompt = document.getElementById("soloPrompt");
+const overviewLegend = document.getElementById("overviewLegend");
+const progressionPanel = document.getElementById("progressionPanel");
+const modeDescription = document.getElementById("modeDescription");
+const settingsPanel = document.getElementById("settingsPanel");
+const modeButtons = [...document.querySelectorAll("[data-mode]")];
+const overviewColors = ["#fb7185", "#22d3ee", "#facc15", "#a3e635", "#f9a8d4", "#fb923c", "#c4b5fd", "#f8fafc"];
+let currentMode = "explore";
+let audioContext;
+
+function playNotes(midis) {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) { soloPrompt.textContent = "Audio is not supported by this browser."; return; }
+    audioContext ||= new Audio();
+    audioContext.resume();
+    const start = audioContext.currentTime;
+    midis.forEach((midi, index) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const time = start + index * 0.09;
+        osc.type = "triangle";
+        osc.frequency.value = 440 * 2 ** ((midi - 69) / 12);
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(0.11 / Math.sqrt(midis.length), time + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.8);
+        osc.connect(gain).connect(audioContext.destination);
+        osc.start(time);
+        osc.stop(time + 0.82);
+    });
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    modeButtons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.mode === mode)));
+    modeDescription.textContent = {
+        explore: "Explore a scale and its chord shapes. Open settings to customize your view.",
+        triads: "Choose a chord and a shape to learn its notes and inversions.",
+        solo: "Follow a progression and aim for a chord tone as each chord arrives."
+    }[mode];
+    progressionPanel.hidden = mode !== "solo";
+    if (mode === "triads") {
+        progressionToggle.checked = false;
+        triadToggle.checked = true;
+        triadViewSelect.value = "one";
+        settingsPanel.open = true;
+    } else if (mode === "solo") {
+        triadToggle.checked = true;
+        triadViewSelect.value = "one";
+        labelModeSelect.value = "chord";
+        settingsPanel.open = false;
+        if (!progressionChords.length && !loadProgression()) return;
+        progressionToggle.checked = true;
+    } else {
+        progressionToggle.checked = false;
+        settingsPanel.open = false;
+    }
+    progressionSelectedVoicing = null;
+    render();
+}
 
 let progressionChords = [];
 let progressionIndex = 0;
@@ -291,7 +353,7 @@ function renderProgressionControls() {
         chip.className = `progression-chip${active && index === progressionIndex ? " active" : ""}`;
         chip.textContent = chord.label;
         chip.setAttribute("aria-label", `Go to ${chord.label}, chord ${index + 1}`);
-        chip.addEventListener("click", () => { progressionIndex = index; render(); });
+        chip.addEventListener("click", () => { progressionIndex = index; shapeSelect.value = ""; render(); });
         progressionChips.appendChild(chip);
     });
     previousChordButton.disabled = !active || progressionChords.length < 2;
@@ -327,6 +389,7 @@ function loadProgression() {
 function stepProgression(direction) {
     if (!progressionModeIsActive() || progressionChords.length < 2) return;
     progressionIndex = (progressionIndex + direction + progressionChords.length) % progressionChords.length;
+    shapeSelect.value = "";
     render();
 }
 
@@ -343,9 +406,7 @@ function renderTriadSummary(scaleRoot, triadRoot, quality, showTriad, stringSetK
     const stringSetName = stringSetKey === "all" ? "All string sets" : STRING_SETS[stringSetKey].name;
     const voicingWord = voicingCount === 1 ? "voicing" : "voicings";
     triadTitle.textContent = `${NOTE_NAMES[triadRoot]} ${triad.name} triad`;
-    triadMeta.textContent = progressionActive
-        ? `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} recommended ${voicingWord}`
-        : `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} ${voicingWord}`;
+    triadMeta.textContent = `${stringSetName} · ${INVERSION_NAMES[inversion]} · ${voicingCount} displayed ${voicingWord}`;
     triadNotes.innerHTML = "";
     notes.forEach((note, index) => {
         triadNotes.appendChild(makeSummaryChip(note, scaleRoot, index === 0 ? "triad-chip triad-root-chip" : "triad-chip"));
@@ -359,6 +420,8 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
     const primaryNoteSet = new Set(getScaleNotes(scaleRoot, scaleKey, includeBlueNote));
     const blue = getBlueNoteInfo(scaleRoot, scaleKey);
     const triadPositionMap = showTriad ? getTriadPositionMap(voicings) : new Map();
+    const overview = showTriad && triadViewSelect.value === "overview" && progressionModeIsActive();
+    const areaStart = practiceAreaSelect.value === "all" ? null : Number(practiceAreaSelect.value);
     const selectedStringIndices = showTriad && stringSetKey !== "all" ? new Set(STRING_SETS[stringSetKey].indices) : new Set();
     const fretCount = maxFret + 1;
     const markerFrets = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21, 24]);
@@ -389,19 +452,25 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
 
         for (let fret = 0; fret <= maxFret; fret += 1) {
             const note = (stringInfo.note + fret) % 12;
-            const inPrimary = patternActive ? patternPositions.has(`${stringIndex}:${fret}`) : primaryNoteSet.has(note);
+            const withinArea = areaStart === null || (fret >= areaStart && fret <= areaStart + 4);
+            const inPrimary = withinArea && (patternActive ? patternPositions.has(`${stringIndex}:${fret}`) : primaryNoteSet.has(note));
             const inBaseScale = baseScaleNoteSet.has(note);
             const isBlueNote = inPrimary && includeBlueNote && note === blue.note && !inBaseScale;
-            const inTriad = triadPositionMap.has(`${stringIndex}:${fret}`);
+            const inTriad = withinArea && triadPositionMap.has(`${stringIndex}:${fret}`);
+            const matchingChords = overview && withinArea ? progressionChords.map((chord, index) =>
+                getTriadNotes(chord.root, chord.quality).includes(note) ? index : -1).filter(index => index >= 0) : [];
             const cell = document.createElement("div");
             cell.className = "fret-cell";
+            if (!withinArea) cell.classList.add("outside-area");
             if (markerFrets.has(fret)) cell.classList.add("marker-fret");
             if (selectedStringIndices.has(stringIndex)) cell.classList.add("selected-triad-string");
 
-            if (inPrimary || inTriad) {
-                const markerStack = document.createElement("span");
+            if (inPrimary || inTriad || matchingChords.length) {
+                const markerStack = document.createElement("button");
+                markerStack.type = "button";
                 markerStack.className = "marker-stack";
-                if (!inPrimary && inTriad) markerStack.classList.add("triad-only");
+                if (!inPrimary) markerStack.classList.add("triad-only");
+                if (!inPrimary && !inTriad) markerStack.classList.add("overview-only");
                 if (inPrimary && inTriad) markerStack.classList.add("layer-overlap");
                 if (isBlueNote) markerStack.classList.add("blue-note-position");
                 if (labelMode === "intervals") markerStack.classList.add("interval-mode");
@@ -421,8 +490,18 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
                 }
                 const label = document.createElement("span");
                 label.className = "marker-label";
-                label.textContent = getMarkerLabel(note, scaleRoot, labelMode, isBlueNote);
+                label.textContent = labelMode === "chord" ? getIntervalName(note, triadRoot) : getMarkerLabel(note, scaleRoot, labelMode, isBlueNote);
                 markerStack.appendChild(label);
+                if (matchingChords.length) {
+                    const dots = document.createElement("span");
+                    dots.className = "chord-dots";
+                    matchingChords.forEach(index => {
+                        const dot = document.createElement("i");
+                        dot.style.background = overviewColors[index % overviewColors.length];
+                        dots.appendChild(dot);
+                    });
+                    markerStack.appendChild(dots);
+                }
 
                 const layerDescription = [
                     isBlueNote ? `blue note ${blue.intervalName}` : (inPrimary ? `${SCALES[scaleKey].name} tone` : null),
@@ -430,7 +509,8 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
                 ].filter(Boolean).join(" + ");
                 const displayNote = isBlueNote ? FLAT_NOTE_NAMES[note] : NOTE_NAMES[note];
                 markerStack.title = `${displayNote} · interval ${getIntervalName(note, scaleRoot)} · string ${stringInfo.number} · fret ${fret} · ${layerDescription}`;
-                markerStack.setAttribute("aria-label", `${displayNote}, interval ${getIntervalName(note, scaleRoot)}, string ${stringInfo.number}, fret ${fret}, ${layerDescription}`);
+                markerStack.setAttribute("aria-label", `Play ${displayNote}, string ${stringInfo.number}, fret ${fret}, ${layerDescription}${matchingChords.length ? ", chord tones for " + matchingChords.map(i => progressionChords[i].label).join(", ") : ""}`);
+                markerStack.addEventListener("click", () => playNotes([stringInfo.midi + fret]));
                 cell.appendChild(markerStack);
             }
             row.appendChild(cell);
@@ -465,14 +545,51 @@ function render() {
     triadQualitySelect.value = triadQuality;
     const shouldCalculateVoicings = showTriad || progressionActive;
     const allVoicings = shouldCalculateVoicings ? getTriadVoicings(triadRoot, triadQuality, stringSetKey, inversion, maxFret) : [];
+    const areaStart = practiceAreaSelect.value === "all" ? null : Number(practiceAreaSelect.value);
+    const availableVoicings = allVoicings.filter(v => areaStart === null || v.positions.every(p => p.fret >= areaStart && p.fret <= areaStart + 4))
+        .sort((a, b) => getVoicingAverageFret(a) - getVoicingAverageFret(b));
     let recommendedVoicing = null;
     if (progressionActive) {
-        recommendedVoicing = chooseNearestVoicing(allVoicings, progressionSelectedVoicing);
+        recommendedVoicing = chooseNearestVoicing(availableVoicings, progressionSelectedVoicing);
         progressionSelectedVoicing = recommendedVoicing;
     } else {
         progressionSelectedVoicing = null;
     }
-    const displayedVoicings = !showTriad ? [] : progressionActive ? (recommendedVoicing ? [recommendedVoicing] : []) : allVoicings;
+    const oldShape = shapeSelect.value;
+    shapeSelect.innerHTML = "";
+    availableVoicings.forEach((voicing, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        const positions = [...voicing.positions].sort((a, b) => b.stringIndex - a.stringIndex);
+        option.textContent = `${STRING_SETS[voicing.setKey].name} · ${INVERSION_NAMES[voicing.inversion]} · frets ${positions.map(p => p.fret).join("–")}`;
+        shapeSelect.appendChild(option);
+    });
+    if (!availableVoicings.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No shapes: widen area or change filters";
+        shapeSelect.appendChild(option);
+    }
+    if (oldShape && Number(oldShape) < availableVoicings.length) shapeSelect.value = oldShape;
+    else if (recommendedVoicing) shapeSelect.value = String(availableVoicings.indexOf(recommendedVoicing));
+    shapeSelect.disabled = !showTriad || triadViewSelect.value !== "one" || !availableVoicings.length;
+    const selectedVoicing = availableVoicings[Number(shapeSelect.value)] || null;
+    const displayedVoicings = !showTriad ? [] : triadViewSelect.value === "all" ? availableVoicings : (selectedVoicing ? [selectedVoicing] : []);
+    overviewLegend.innerHTML = "";
+    document.getElementById("overviewHelp").hidden = !(triadViewSelect.value === "overview" && progressionActive && showTriad);
+    if (triadViewSelect.value === "overview" && progressionActive && showTriad) {
+        progressionChords.forEach((chord, index) => {
+            const item = document.createElement("span");
+            const dot = document.createElement("i");
+            dot.style.background = overviewColors[index % overviewColors.length];
+            item.append(dot, document.createTextNode(chord.label + " "));
+            overviewLegend.appendChild(item);
+        });
+    }
+    const notes = getTriadNotes(triadRoot, triadQuality).map(n => NOTE_NAMES[n]).join(", ");
+    soloPrompt.textContent = progressionActive
+        ? `Try it: play a short phrase, then land on ${notes} over ${progressionChords[progressionIndex].label}. Use Next as the chord changes.${!availableVoicings.length ? " No complete shape fits these filters; widen the practice area or change the string set." : ""}`
+        : "Load a progression to practice aiming for its chord tones.";
 
     renderScaleSummary(scaleRoot, scaleKey, includeBlueNote);
     renderProgressionControls();
@@ -480,9 +597,21 @@ function render() {
     renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMode, showTriad, triadRoot, triadQuality, stringSetKey, displayedVoicings);
 }
 
-[keySelect, scaleSelect, patternSelect, patternPositionSelect, labelModeSelect, fretSelect, blueNoteToggle, triadToggle, triadRootSelect, triadQualitySelect, stringSetSelect, inversionSelect]
+[keySelect, scaleSelect, patternSelect, patternPositionSelect, labelModeSelect, fretSelect, blueNoteToggle, triadToggle, triadRootSelect, triadQualitySelect, stringSetSelect, inversionSelect, practiceAreaSelect, triadViewSelect, shapeSelect]
     .forEach(control => control.addEventListener("change", render));
+practiceAreaSelect.addEventListener("change", () => {
+    if (practiceAreaSelect.value !== "all") {
+        const end = Number(practiceAreaSelect.value) + 4;
+        if (Number(fretSelect.value) < end) fretSelect.value = end <= 15 ? "15" : "24";
+        render();
+    }
+});
 
+modeButtons.forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
+document.getElementById("playChordButton").addEventListener("click", () => {
+    const chord = getCurrentTriadSettings();
+    playNotes(TRIADS[chord.quality].intervals.map(interval => 48 + chord.root + interval));
+});
 progressionToggle.addEventListener("change", () => {
     if (progressionToggle.checked && progressionChords.length === 0) {
         if (!loadProgression()) progressionToggle.checked = false;
@@ -504,6 +633,8 @@ resetButton.addEventListener("click", () => {
     patternPositionSelect.value = "0";
     labelModeSelect.value = "notes";
     fretSelect.value = "12";
+    practiceAreaSelect.value = "all";
+    triadViewSelect.value = "all";
     blueNoteToggle.checked = false;
     triadToggle.checked = true;
     triadRootSelect.value = "7";
@@ -516,7 +647,8 @@ resetButton.addEventListener("click", () => {
     progressionIndex = 0;
     progressionSelectedVoicing = null;
     progressionError.hidden = true;
-    render();
+    setMode("explore");
 });
 
-render();
+setMode("explore");
+
