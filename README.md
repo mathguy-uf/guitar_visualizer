@@ -2,10 +2,11 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.9
+## Version 0.10
 
 Current features include:
 
+- Metronome with adjustable 40–240 BPM, 2/4, 3/4, 4/4, and 6/8; independently selectable beat and offbeat clicks
 - Explore, Learn triads, and Solo practice modes with collapsible settings
 - Select one triad shape, all shapes of the current chord, or a progression chord-tone overview
 - Chord-relative interval labels, alongside note names and scale intervals
@@ -53,6 +54,10 @@ Use **Explore**, **Learn triads**, or **Solo practice** to set up a starting vie
 In Solo practice, load a progression, then use its chord buttons or Previous and Next. The prompt suggests chord tones to target. Choose **Chord intervals** for labels measured from the current chord root; other notes are also labeled by their interval from that root. **Choose one shape** shows a selectable voicing; **All shapes of current chord** shows all matching voicings. **Progression chord-tone overview** adds colored dots for every chord tone across the displayed area, including tones outside the selected scale. Dots indicate note membership, not simultaneous playable shapes. The legend identifies each chord; colors repeat if there are more than eight entries.
 
 Tap a displayed fretboard marker to hear its pitch, or tap **Hear current chord** to hear a synthesized arpeggio. Audio begins only after a tap and uses the browser's Web Audio support. The app does not provide a backing track.
+
+## Metronome
+
+Open **Metronome**, choose a meter and tempo, then press **Start**. **Beats** controls the numbered pulses; **Offbeats** controls the “&” halfway between pulses. Either or both can be turned off while the count continues. Beat 1 is accented; in 6/8, pulses 1 and 4 are accented. In 2/4, 3/4, and 4/4, BPM counts quarter notes and the offbeats are eighth notes. In 6/8, BPM counts eighth-note pulses and the offbeats are sixteenth notes. Tempo can be adjusted while playing; changing meter restarts the count. **Stop** silences metronome clicks without stopping the fretboard's note sounds. Browser background throttling or device sleep may interrupt timing.
 
 ## Blue note
 
@@ -127,5 +132,6 @@ In the repository, open **Settings → Pages** and choose:
 ## License
 
 MIT License
+
 
 
