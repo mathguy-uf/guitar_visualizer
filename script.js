@@ -12,10 +12,43 @@ const OPEN_STRINGS = [
 ];
 
 const SCALES = {
-    majorPentatonic: { name: "major pentatonic", family: "major", intervals: [0, 2, 4, 7, 9] },
-    minorPentatonic: { name: "minor pentatonic", family: "minor", intervals: [0, 3, 5, 7, 10] },
-    majorScale: { name: "major scale", family: "major", intervals: [0, 2, 4, 5, 7, 9, 11] },
-    naturalMinor: { name: "natural minor", family: "minor", intervals: [0, 2, 3, 5, 7, 8, 10] }
+    majorPentatonic: { name: "major pentatonic", family: "major", intervals: [0, 2, 4, 7, 9], degrees: ["1", "2", "3", "5", "6"] },
+    minorPentatonic: { name: "minor pentatonic", family: "minor", intervals: [0, 3, 5, 7, 10], degrees: ["1", "♭3", "4", "5", "♭7"] },
+    majorScale: {
+        name: "Ionian (major)", family: "major", modeNumber: 1,
+        intervals: [0, 2, 4, 5, 7, 9, 11], degrees: ["1", "2", "3", "4", "5", "6", "7"],
+        description: "The major scale."
+    },
+    dorian: {
+        name: "Dorian", family: "minor", modeNumber: 2,
+        intervals: [0, 2, 3, 5, 7, 9, 10], degrees: ["1", "2", "♭3", "4", "5", "6", "♭7"],
+        description: "Minor with a natural 6th."
+    },
+    phrygian: {
+        name: "Phrygian", family: "minor", modeNumber: 3,
+        intervals: [0, 1, 3, 5, 7, 8, 10], degrees: ["1", "♭2", "♭3", "4", "5", "♭6", "♭7"],
+        description: "Minor with a flat 2nd."
+    },
+    lydian: {
+        name: "Lydian", family: "major", modeNumber: 4,
+        intervals: [0, 2, 4, 6, 7, 9, 11], degrees: ["1", "2", "3", "♯4", "5", "6", "7"],
+        description: "Major with a raised 4th."
+    },
+    mixolydian: {
+        name: "Mixolydian", family: "major", modeNumber: 5,
+        intervals: [0, 2, 4, 5, 7, 9, 10], degrees: ["1", "2", "3", "4", "5", "6", "♭7"],
+        description: "Major with a flat 7th."
+    },
+    naturalMinor: {
+        name: "Aeolian (natural minor)", family: "minor", modeNumber: 6,
+        intervals: [0, 2, 3, 5, 7, 8, 10], degrees: ["1", "2", "♭3", "4", "5", "♭6", "♭7"],
+        description: "The natural minor scale."
+    },
+    locrian: {
+        name: "Locrian", family: "minor", modeNumber: 7,
+        intervals: [0, 1, 3, 5, 6, 8, 10], degrees: ["1", "♭2", "♭3", "4", "♭5", "♭6", "♭7"],
+        description: "Minor with a flat 2nd and flat 5th; a diminished tonic triad."
+    }
 };
 
 const TRIADS = {
@@ -66,6 +99,7 @@ const progressionError = document.getElementById("progressionError");
 const resetButton = document.getElementById("resetButton");
 const scaleTitle = document.getElementById("scaleTitle");
 const scaleNotes = document.getElementById("scaleNotes");
+const scaleModeInfo = document.getElementById("scaleModeInfo");
 const triadSummary = document.getElementById("triadSummary");
 const triadTitle = document.getElementById("triadTitle");
 const triadMeta = document.getElementById("triadMeta");
@@ -364,19 +398,52 @@ function getTriadNotes(root, quality) {
     return TRIADS[quality].intervals.map(interval => (root + interval) % 12);
 }
 
-function getIntervalName(note, scaleRoot) {
-    return INTERVAL_NAMES[(note - scaleRoot + 12) % 12];
+function getIntervalName(note, scaleRoot, scaleKey = null) {
+    const interval = (note - scaleRoot + 12) % 12;
+    const scale = SCALES[scaleKey];
+    const index = scale ? scale.intervals.indexOf(interval) : -1;
+    return index >= 0 ? scale.degrees[index] : INTERVAL_NAMES[interval];
 }
 
-function getMarkerLabel(note, scaleRoot, labelMode, isBlueNote = false) {
-    if (labelMode === "intervals") return getIntervalName(note, scaleRoot);
+// Spell each scale degree with its own letter: G Lydian has C♯ (♯4),
+// while G Locrian has D♭ (♭5), even though both sound at the same fret.
+function spellNote(note, letterIndex) {
+    const letters = Object.keys(NATURAL_ROOTS);
+    const letter = letters[(letterIndex + 7) % 7];
+    const difference = (note - NATURAL_ROOTS[letter] + 18) % 12 - 6;
+    return letter + (difference > 0 ? "♯".repeat(difference) : "♭".repeat(-difference));
+}
+
+function getScaleNoteName(note, scaleRoot, scaleKey, isBlueNote = false) {
+    const scale = SCALES[scaleKey];
+    const interval = (note - scaleRoot + 12) % 12;
+    const index = scale.intervals.indexOf(interval);
+    const degree = index >= 0 ? scale.degrees[index] : isBlueNote ? getBlueNoteInfo(scaleRoot, scaleKey).intervalName : null;
+    if (!degree) return NOTE_NAMES[note];
+    const tonicLetter = Object.keys(NATURAL_ROOTS).indexOf(NOTE_NAMES[scaleRoot][0]);
+    const degreeNumber = Number(degree.match(/[1-7]/)[0]);
+    return spellNote(note, tonicLetter + degreeNumber - 1);
+}
+
+function getModeInfo(root, scaleKey) {
+    const scale = SCALES[scaleKey];
+    if (!scale.modeNumber) return "";
+    const parentRoot = (root - SCALES.majorScale.intervals[scale.modeNumber - 1] + 12) % 12;
+    const tonicLetter = Object.keys(NATURAL_ROOTS).indexOf(NOTE_NAMES[root][0]);
+    const parentName = spellNote(parentRoot, tonicLetter - scale.modeNumber + 1);
+    return `Mode ${scale.modeNumber} of ${parentName} major · ${scale.description} Treat ${NOTE_NAMES[root]} as home.`;
+}
+
+function getMarkerLabel(note, scaleRoot, labelMode, isBlueNote = false, scaleKey = null) {
+    if (labelMode === "intervals") return getIntervalName(note, scaleRoot, scaleKey);
+    if (scaleKey) return getScaleNoteName(note, scaleRoot, scaleKey, isBlueNote);
     return isBlueNote ? FLAT_NOTE_NAMES[note] : NOTE_NAMES[note];
 }
 
-function makeSummaryChip(note, scaleRoot, className = "", displayName = null) {
+function makeSummaryChip(note, scaleRoot, className = "", displayName = null, scaleKey = null) {
     const chip = document.createElement("span");
     chip.className = `note-chip${className ? ` ${className}` : ""}`;
-    chip.textContent = `${displayName || NOTE_NAMES[note]} · ${getIntervalName(note, scaleRoot)}`;
+    chip.textContent = `${displayName || NOTE_NAMES[note]} · ${getIntervalName(note, scaleRoot, scaleKey)}`;
     return chip;
 }
 
@@ -385,15 +452,18 @@ function renderScaleSummary(root, scaleKey, includeBlueNote) {
     const blue = getBlueNoteInfo(root, scaleKey);
     const notes = getScaleNotes(root, scaleKey, includeBlueNote);
 
-    blueNoteLabel.textContent = `Blue note · ${blue.intervalName}`;
+    const blueAlreadyInScale = scale.intervals.includes(blue.interval);
+    blueNoteLabel.textContent = `Blue note · ${blue.intervalName}${blueAlreadyInScale ? " (in scale)" : ""}`;
     scaleTitle.textContent = `${NOTE_NAMES[root]} ${scale.name}${includeBlueNote ? " + blue note" : ""}`;
+    scaleModeInfo.textContent = getModeInfo(root, scaleKey);
+    scaleModeInfo.hidden = !scale.modeNumber;
     scaleNotes.innerHTML = "";
 
     notes.forEach(note => {
         const isRoot = note === root;
-        const isBlue = includeBlueNote && note === blue.note;
+        const isBlue = includeBlueNote && note === blue.note && !blueAlreadyInScale;
         const classes = [isRoot ? "root-chip" : "", isBlue ? "blue-note-chip" : ""].filter(Boolean).join(" ");
-        scaleNotes.appendChild(makeSummaryChip(note, root, classes, isBlue ? FLAT_NOTE_NAMES[note] : null));
+        scaleNotes.appendChild(makeSummaryChip(note, root, classes, getScaleNoteName(note, root, scaleKey, isBlue), scaleKey));
     });
 }
 
@@ -719,7 +789,7 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
                 }
                 const label = document.createElement("span");
                 label.className = "marker-label";
-                label.textContent = labelMode === "chord" ? getIntervalName(note, triadRoot) : getMarkerLabel(note, scaleRoot, labelMode, isBlueNote);
+                label.textContent = labelMode === "chord" ? getIntervalName(note, triadRoot) : getMarkerLabel(note, scaleRoot, labelMode, isBlueNote, scaleKey);
                 markerStack.appendChild(label);
                 if (matchingChords.length) {
                     const dots = document.createElement("span");
@@ -736,8 +806,8 @@ function renderFretboard(scaleRoot, scaleKey, includeBlueNote, maxFret, labelMod
                     isBlueNote ? `blue note ${blue.intervalName}` : (inPrimary ? `${SCALES[scaleKey].name} tone` : null),
                     inTriad ? `${TRIADS[triadQuality].name} triad voicing tone` : null
                 ].filter(Boolean).join(" + ");
-                const displayNote = isBlueNote ? FLAT_NOTE_NAMES[note] : NOTE_NAMES[note];
-                markerStack.title = `${displayNote} · interval ${getIntervalName(note, scaleRoot)} · string ${stringInfo.number} · fret ${fret} · ${layerDescription}`;
+                const displayNote = getScaleNoteName(note, scaleRoot, scaleKey, isBlueNote);
+                markerStack.title = `${displayNote} · interval ${getIntervalName(note, scaleRoot, scaleKey)} · string ${stringInfo.number} · fret ${fret} · ${layerDescription}`;
                 markerStack.setAttribute("aria-label", `Play ${displayNote}, string ${stringInfo.number}, fret ${fret}, ${layerDescription}${matchingChords.length ? ", chord tones for " + matchingChords.map(i => progressionChords[i].label).join(", ") : ""}`);
                 markerStack.addEventListener("click", () => playNotes([stringInfo.midi + fret]));
                 cell.appendChild(markerStack);
@@ -756,8 +826,9 @@ function render() {
     patternSelect.disabled = !isPentatonic;
     const patternActive = isPentatonic && patternSelect.value === "pattern";
     patternPositionSelect.disabled = !patternActive;
-    blueNoteToggle.disabled = patternActive;
-    const includeBlueNote = blueNoteToggle.checked && !patternActive;
+    const blueAlreadyInScale = SCALES[scaleKey].intervals.includes(getBlueNoteInterval(scaleKey));
+    blueNoteToggle.disabled = patternActive || blueAlreadyInScale;
+    const includeBlueNote = blueNoteToggle.checked && !blueNoteToggle.disabled;
     patternHelp.textContent = !isPentatonic ? "Pattern view is available for pentatonic scales." : patternActive
         ? `${scaleKey === "majorPentatonic" ? "3–2" : "2–3"}: play successive scale tones from low E to high e. Dashed outlines mark each complete two-string group. Increase the fret range or practice area if a group is cut off. Blue note is hidden in this view.`
         : "Choose a pattern to trace a path between pentatonic positions.";
@@ -887,6 +958,7 @@ if (typeof ResizeObserver !== "undefined") {
 } else {
     window.addEventListener("resize", drawPatternOutlines);
 }
+
 
 
 

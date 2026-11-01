@@ -2,7 +2,7 @@
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.
 
-## Version 0.13
+## Version 0.14
 
 Current features include:
 
@@ -15,7 +15,9 @@ Current features include:
 - Tap displayed notes or play the current chord to hear synthesized audio
 - Major and minor pentatonic scales in all 12 keys
 - Selectable 3–2 major and 2–3 minor pentatonic paths, starting at a low-E root
-- Full major and natural minor scales in all 12 keys
+- All seven diatonic modes in all 12 keys: Ionian (major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (natural minor), and Locrian
+- Mode-aware note spelling and interval labels, including Lydian's ♯4 and Locrian's ♭5
+- A compact explanation of each mode and its parent major scale
 - Optional blue-note control on the primary layer
 - Major-family blue note: `♭3`
 - Minor-family blue note: `♭5`
@@ -39,6 +41,24 @@ Current features include:
 - Landscape playing view with a wider fretboard and reduced screen clutter
 - Horizontal fretboard scrolling on narrow screens
 - iPhone safe-area support and touch-friendly controls
+
+## Musical modes
+
+Open **Scale & triad settings → Scale / mode** and choose from the **Diatonic modes · 7 notes** group. The **Key** is the mode's tonic, not the parent major key. For example, choose **A + Dorian** for A B C D E F♯ G. The summary identifies its parent, G major, but A is the home note. Modes work with the existing triad overlays, progressions, practice areas, note playback, and interval labels.
+
+| Mode | Formula | Character |
+| --- | --- | --- |
+| Ionian (major) | 1 2 3 4 5 6 7 | Major scale |
+| Dorian | 1 2 ♭3 4 5 6 ♭7 | Minor with a natural 6th |
+| Phrygian | 1 ♭2 ♭3 4 5 ♭6 ♭7 | Minor with a flat 2nd |
+| Lydian | 1 2 3 ♯4 5 6 7 | Major with a raised 4th |
+| Mixolydian | 1 2 3 4 5 6 ♭7 | Major with a flat 7th |
+| Aeolian (natural minor) | 1 2 ♭3 4 5 ♭6 ♭7 | Natural minor scale |
+| Locrian | 1 ♭2 ♭3 4 ♭5 ♭6 ♭7 | Flat 2nd and flat 5th; diminished tonic triad |
+
+Scale-note names follow the degree's letter, so G Lydian shows C♯ (♯4), while G Locrian shows D♭ (♭5). The Blue note switch adds ♭3 to major-family modes and ♭5 to minor-family modes. Locrian already contains ♭5, so the switch is disabled there without adding or recoloring that scale tone. Pentatonic path controls apply only to the two pentatonic scales.
+
+Run all mode and tuner regression checks with `node --test tests/*.test.cjs`.
 
 ## Pentatonic 3–2 / 2–3 paths
 
@@ -108,7 +128,7 @@ The blue note is shown with a cyan dashed marker so it remains visually distinct
 
 The fretboard uses two visual layers:
 
-1. **Primary layer:** the selected pentatonic, major, or natural-minor scale, optionally including the blue note.
+1. **Primary layer:** the selected pentatonic scale or diatonic mode, optionally including the blue note.
 2. **Secondary layer:** optional translucent three-string triad voicings.
 
 When the two layers occupy the same fret/string position, the translucent secondary marker becomes larger so it remains visible as a halo around the primary marker.
@@ -157,6 +177,7 @@ In the repository, open **Settings → Pages** and choose:
 ## License
 
 MIT License
+
 
 
 

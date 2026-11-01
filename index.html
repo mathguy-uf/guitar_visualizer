@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.13">
+    <link rel="stylesheet" href="style.css?v=0.14">
     <style>
         .progression-card {
             margin-top: 14px;
@@ -236,7 +236,7 @@
                 <h1>Guitar Visualizer</h1>
                 <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
             </div>
-            <div class="version-badge" aria-label="Version 0.13">v0.13</div>
+            <div class="version-badge" aria-label="Version 0.14">v0.14</div>
         </header>
 
         <nav class="practice-modes" aria-label="Choose a learning mode">
@@ -262,8 +262,20 @@
                         <label class="field"><span>Key</span><select id="keySelect" aria-label="Select key">
                             <option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">E♭</option><option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7" selected>G</option><option value="8">A♭</option><option value="9">A</option><option value="10">B♭</option><option value="11">B</option>
                         </select></label>
-                        <label class="field"><span>Scale</span><select id="scaleSelect" aria-label="Select scale">
-                            <option value="majorPentatonic" selected>Major pentatonic · 5 notes</option><option value="minorPentatonic">Minor pentatonic · 5 notes</option><option value="majorScale">Major scale · 7 notes</option><option value="naturalMinor">Natural minor · 7 notes</option>
+                        <label class="field"><span>Scale / mode</span><select id="scaleSelect" aria-label="Select scale or musical mode">
+                            <optgroup label="Pentatonic scales · 5 notes">
+                                <option value="majorPentatonic" selected>Major pentatonic</option>
+                                <option value="minorPentatonic">Minor pentatonic</option>
+                            </optgroup>
+                            <optgroup label="Diatonic modes · 7 notes">
+                                <option value="majorScale">Ionian (major)</option>
+                                <option value="dorian">Dorian</option>
+                                <option value="phrygian">Phrygian</option>
+                                <option value="lydian">Lydian</option>
+                                <option value="mixolydian">Mixolydian</option>
+                                <option value="naturalMinor">Aeolian (natural minor)</option>
+                                <option value="locrian">Locrian</option>
+                            </optgroup>
                         </select></label>
                         <label class="field"><span>Marker labels</span><select id="labelModeSelect" aria-label="Choose marker label style"><option value="notes" selected>Note names</option><option value="intervals">Scale intervals</option><option value="chord">Chord intervals</option></select></label>
                         <label class="field"><span>Fret range</span><select id="fretSelect" aria-label="Select fret range"><option value="12" selected>0–12</option><option value="15">0–15</option><option value="24">0–24</option></select></label>
@@ -273,7 +285,7 @@
                         <label class="compact-toggle blue-note-toggle"><span id="blueNoteLabel">Blue note · ♭3</span><input id="blueNoteToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
                     </div>
                     <p id="patternHelp" role="status" style="color: var(--muted); font-size: 0.78rem; line-height: 1.45; margin: 10px 0 0;"></p>
-                    <p class="layer-help">Major-family scales add the ♭3; minor-family scales add the ♭5. The blue note is shown with a cyan dashed marker.</p>
+                    <p class="layer-help">Major-family scales add the ♭3; minor-family scales add the ♭5. Locrian already contains ♭5, so its Blue note switch is disabled. Added blue notes use a cyan dashed marker.</p>
                 </section>
 
                 <section class="layer-card overlay-layer" aria-labelledby="overlay-layer-heading">
@@ -322,7 +334,7 @@
             </section>
 
         <section class="scale-summary" aria-live="polite">
-            <div class="summary-block"><p class="section-kicker">Primary</p><h2 id="scaleTitle">G major pentatonic</h2><div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div></div>
+            <div class="summary-block"><p class="section-kicker">Primary</p><h2 id="scaleTitle">G major pentatonic</h2><div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div><p id="scaleModeInfo" class="summary-meta scale-mode-info" hidden></p></div>
             <div id="triadSummary" class="summary-block"><p class="section-kicker triad-kicker">Secondary</p><h2 id="triadTitle">G major triad</h2><p id="triadMeta" class="summary-meta"></p><div id="triadNotes" class="note-chips triad-chips" aria-label="Triad notes"></div></div>
             <div class="legend" aria-label="Fretboard legend">
                 <span><i class="legend-dot root-dot"></i> Scale root</span>
@@ -398,10 +410,11 @@
 
         <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
     </main>
-    <script src="script.js?v=0.12"></script>
+    <script src="script.js?v=0.14"></script>
     <script src="tuner.js?v=0.13"></script>
 </body>
 </html>
+
 
 
 

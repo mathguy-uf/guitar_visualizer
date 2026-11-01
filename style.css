@@ -396,6 +396,8 @@ select:disabled {
     line-height: 1.35;
 }
 
+.scale-mode-info { max-width: 52ch; margin: 2px 0 0; font-size: .76rem; line-height: 1.45; }
+
 .note-chips,
 .legend {
     display: flex;
@@ -800,6 +802,7 @@ footer {
         transition: none !important;
     }
 }
+
 
 
 
