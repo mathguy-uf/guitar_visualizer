@@ -3,263 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0b1220">
+    <meta name="theme-color" content="#171e1b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Guitar Visualizer</title>
-    <link rel="stylesheet" href="style.css?v=0.14">
-    <style>
-        .progression-card {
-            margin-top: 14px;
-            padding: 15px;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            background: #0b1728;
-            box-shadow: inset 3px 0 0 rgba(52, 211, 153, 0.8);
-        }
-        .progression-heading,
-        .progression-entry,
-        .progression-nav {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .progression-heading {
-            justify-content: space-between;
-            margin-bottom: 14px;
-        }
-        .progression-entry input {
-            flex: 1 1 280px;
-            min-width: 0;
-            min-height: 44px;
-            padding: 0 13px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: #0f1d31;
-            color: var(--text);
-        }
-        .progression-entry button,
-        .progression-nav button,
-        .progression-chip {
-            min-height: 44px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: #13233b;
-            color: var(--text);
-            font-weight: 800;
-            cursor: pointer;
-        }
-        .progression-entry button,
-        .progression-nav button { padding: 0 14px; }
-        .progression-nav button:disabled { opacity: 0.4; cursor: default; }
-        .progression-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 14px;
-        }
-        .progression-chip { min-width: 48px; padding: 0 12px; }
-        .progression-chip.active {
-            background: rgba(52, 211, 153, 0.18);
-            border-color: #34d399;
-            color: #d1fae5;
-        }
-        .progression-footer {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 12px;
-            margin-top: 14px;
-        }
-        .progression-status,
-        .progression-error,
-        .progression-help {
-            margin: 0;
-            font-size: 0.78rem;
-            line-height: 1.45;
-        }
-        .progression-status,
-        .progression-help { color: var(--muted); }
-        .progression-error { margin-top: 10px; color: #fecaca; }
-        .progression-mode-label { color: #6ee7b7; }
-        .landscape-only { display: none; }
-
-        .blue-note-toggle {
-            align-self: end;
-            justify-content: space-between;
-            padding: 0 2px;
-        }
-        .blue-note-toggle input:checked + .switch { background: #0891b2; }
-        .blue-note-chip {
-            border-color: rgba(34, 211, 238, 0.85);
-            background: rgba(34, 211, 238, 0.14);
-            color: #a5f3fc;
-        }
-        .blue-note-dot {
-            background: #22d3ee;
-            border: 2px dashed #0e7490;
-        }
-        .scale-marker.blue-note {
-            background: #22d3ee;
-            border: 3px dashed #083344;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.24), 0 0 0 2px rgba(165, 243, 252, 0.35);
-        }
-        .marker-stack.blue-note-position .marker-label { color: #052f36; }
-
-        @media (max-width: 620px) and (orientation: portrait) {
-            .app-shell { padding: max(8px, env(safe-area-inset-top)) 8px max(18px, env(safe-area-inset-bottom)); }
-            .hero { padding: 8px 2px 12px; gap: 8px; }
-            .hero .subtitle { display: none; }
-            .hero h1 { margin-bottom: 0; font-size: 1.8rem; }
-            .eyebrow { margin-bottom: 4px; font-size: 0.63rem; }
-            .version-badge { padding: 5px 7px; font-size: 0.7rem; }
-            .control-panel { padding: 10px; border-radius: 15px; }
-            .section-heading { margin-bottom: 9px; }
-            .section-heading .section-kicker { display: none; }
-            .section-heading h2 { font-size: 1rem; }
-            .secondary-button { min-height: 38px; padding: 0 10px; font-size: 0.78rem; }
-            .layer-stack { gap: 8px; }
-            .layer-card { padding: 10px; border-radius: 12px; }
-            .layer-title-row { margin-bottom: 9px; }
-            .layer-label { font-size: 0.56rem; }
-            .primary-grid,
-            .overlay-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-            .overlay-grid { margin-top: 9px; }
-            .field { gap: 4px; }
-            .field > span,
-            .compact-toggle > span:first-child { font-size: 0.72rem; }
-            select { min-height: 40px; padding-left: 9px; padding-right: 24px; border-radius: 9px; font-size: 0.78rem; }
-            .blue-note-toggle { min-height: 40px; }
-            .layer-help { display: none; }
-            .progression-card { margin-top: 8px; padding: 10px; border-radius: 12px; }
-            .progression-heading { margin-bottom: 9px; }
-            .progression-entry { display: grid; grid-template-columns: 1fr; gap: 7px; }
-            .progression-entry input,
-            .progression-entry button { width: 100%; min-height: 40px; font-size: 0.82rem; }
-            .progression-help { display: none; }
-            .progression-chips { gap: 6px; margin-top: 8px; }
-            .progression-chip { min-width: 43px; min-height: 38px; padding: 0 9px; font-size: 0.8rem; }
-            .progression-footer { grid-template-columns: 1fr; gap: 7px; margin-top: 8px; }
-            .progression-status { font-size: 0.7rem; }
-            .progression-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-            .progression-nav button { min-height: 40px; font-size: 0.78rem; }
-            .scale-summary { display: grid; gap: 10px; margin: 10px 2px; }
-            .summary-block { gap: 5px; }
-            .summary-block .section-kicker { margin-bottom: 1px; font-size: 0.58rem; }
-            .summary-block h2 { font-size: 0.95rem; }
-            .note-chips { gap: 5px; }
-            .note-chip { min-width: 38px; height: 29px; padding: 0 7px; font-size: 0.7rem; }
-            .legend { gap: 8px; font-size: 0.7rem; }
-            .fretboard-card { padding: 10px 0; border-radius: 15px; }
-            .fretboard-heading-row,
-            .orientation-note { padding-left: 10px; padding-right: 10px; }
-            .fretboard-heading-row { margin-bottom: 7px; }
-            .fretboard-heading-row .section-kicker { display: none; }
-            .fretboard-heading-row h2 { font-size: 1rem; }
-            .fretboard { --cell-width: 48px; }
-            .fret-cell { height: 51px; }
-            .orientation-note { margin-top: 7px; font-size: 0.7rem; }
-            .swipe-hint { max-width: none; font-size: 0.67rem; }
-            .tip-card,
-            footer { display: none; }
-        }
-
-        @media (orientation: landscape) and (max-height: 620px) {
-            .app-shell {
-                width: 100%;
-                padding: max(4px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-            }
-            .portrait-only { display: none; }
-            .landscape-only { display: inline; }
-            .hero { align-items: center; padding: 3px 2px 6px; }
-            .hero .eyebrow,
-            .hero .subtitle { display: none; }
-            .hero h1 { margin: 0; font-size: 1.35rem; }
-            .version-badge { padding: 4px 7px; font-size: 0.65rem; }
-            .control-panel { padding: 7px; border-radius: 12px; }
-            .control-panel > .section-heading { display: none; }
-            .layer-stack { grid-template-columns: 1fr 1fr; gap: 7px; }
-            .layer-card { padding: 7px 9px; border-radius: 10px; }
-            .layer-title-row { margin-bottom: 5px; gap: 6px; }
-            .layer-label,
-            .layer-help { display: none; }
-            .layer-card h3 { font-size: 0.78rem; }
-            .primary-grid,
-            .overlay-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
-            .overlay-grid { margin-top: 5px; }
-            .field { gap: 2px; }
-            .field > span,
-            .compact-toggle > span:first-child { font-size: 0.61rem; }
-            select { min-height: 34px; padding: 0 20px 0 7px; border-radius: 7px; font-size: 0.68rem; }
-            .compact-toggle { min-height: 32px; }
-            .blue-note-toggle { min-height: 34px; }
-            .progression-card { margin-top: 6px; padding: 7px 9px; border-radius: 10px; }
-            .progression-heading { margin-bottom: 5px; }
-            .progression-heading .layer-label { display: none; }
-            .progression-card h3 { font-size: 0.78rem; }
-            .progression-entry { gap: 5px; }
-            .progression-entry input,
-            .progression-entry button { min-height: 34px; border-radius: 7px; font-size: 0.7rem; }
-            .progression-help,
-            .progression-status { display: none; }
-            .progression-chips { gap: 4px; margin-top: 5px; }
-            .progression-chip { min-width: 36px; min-height: 31px; padding: 0 7px; border-radius: 7px; font-size: 0.68rem; }
-            .progression-footer { display: block; margin-top: 5px; }
-            .progression-nav { justify-content: flex-end; gap: 5px; }
-            .progression-nav button { min-height: 32px; padding: 0 9px; border-radius: 7px; font-size: 0.68rem; }
-            .scale-summary { display: flex; align-items: center; gap: 12px; margin: 6px 2px; flex-wrap: nowrap; overflow-x: auto; }
-            .summary-block { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-            .summary-block .section-kicker,
-            .summary-block .note-chips,
-            .summary-meta { display: none; }
-            .summary-block h2 { white-space: nowrap; font-size: 0.78rem; }
-            .legend { flex: 0 0 auto; flex-wrap: nowrap; font-size: 0.64rem; }
-            .fretboard-card { padding: 6px 0 7px; border-radius: 11px; }
-            .fretboard-heading-row { padding: 0 8px; margin-bottom: 4px; }
-            .fretboard-heading-row .section-kicker { display: none; }
-            .fretboard-heading-row h2 { font-size: 0.82rem; }
-            .swipe-hint { font-size: 0.62rem; }
-            .fretboard { --cell-width: 59px; --label-width: 42px; }
-            .fret-number-row { font-size: 0.62rem; }
-            .fret-cell { height: 44px; }
-            .orientation-note,
-            .tip-card,
-            footer { display: none; }
-        }
-    </style>
-</head>
+    <title>Guitar — Learn, practice, play</title>
+    <link rel="stylesheet" href="style.css?v=1.0">
+    <link rel="stylesheet" href="legacy-layout.css?v=1.0"><link rel="stylesheet" href="app.css?v=1.0"></head>
 <body>
     <main class="app-shell">
-        <header class="hero">
-            <div>
-                <p class="eyebrow">FRETBOARD TRAINER</p>
-                <h1>Guitar Visualizer</h1>
-                <p class="subtitle">Use a scale as the primary layer, add a blue note when you want extra tension, then place triads and progressions over the same neck.</p>
-            </div>
-            <div class="version-badge" aria-label="Version 0.14">v0.14</div>
-        </header>
-
-        <nav class="practice-modes" aria-label="Choose a learning mode">
+        <header class="hero"><a class="brand" href="#learn" aria-label="Guitar home"><span class="brand-mark" aria-hidden="true">♮</span><span>Guitar<small>A little practice, every day.</small></span></a><button type="button" class="help-button" data-help="context" aria-label="Help for this screen">?<span>Help</span></button></header><nav class="primary-nav" aria-label="Main sections"><button data-section="learn" aria-current="page"><span aria-hidden="true">▦</span>Learn</button><button data-section="practice"><span aria-hidden="true">♫</span>Practice</button><button data-section="play"><span aria-hidden="true">▷</span>Play</button><button data-section="tools"><span aria-hidden="true">♮</span>Tools</button></nav><section id="view-learn" class="app-view" aria-labelledby="learn-heading"><div class="view-heading"><div><p class="section-kicker">Make yourself at home</p><h1 id="learn-heading" tabindex="-1">Explore the fretboard</h1><p>Find a note. See a shape. Hear how they fit.</p></div></div><aside id="welcome" class="welcome-card"><span>New here? Take a one-minute tour, or start exploring.</span><div><button id="walkthroughStart">Show me around</button><button id="welcomeSkip" class="text-button">Skip</button></div></aside><nav class="practice-modes" aria-label="Choose a learning mode">
             <button type="button" data-mode="explore" aria-pressed="true">Explore</button>
             <button type="button" data-mode="triads" aria-pressed="false">Learn triads</button>
             <button type="button" data-mode="solo" aria-pressed="false">Solo practice</button>
         </nav>
         <p class="mode-description" id="modeDescription">Explore a scale and its chord shapes. Open settings to customize your view.</p>
-        <details class="control-panel" id="settingsPanel">
-            <summary>Scale &amp; triad settings</summary>
-            <div class="section-heading">
-                <div><p class="section-kicker">Build your view</p><h2 id="controls-heading">Fretboard layers</h2></div>
-                <button id="resetButton" class="secondary-button" type="button">Reset to G</button>
-            </div>
-
-            <div class="layer-stack">
-                <section class="layer-card primary-layer" aria-labelledby="primary-layer-heading">
-                    <div class="layer-title-row">
-                        <span class="layer-swatch scale-swatch" aria-hidden="true"></span>
-                        <div><p class="layer-label">Primary layer</p><h3 id="primary-layer-heading">Scale</h3></div>
-                    </div>
-                    <div class="controls-grid primary-grid">
-                        <label class="field"><span>Key</span><select id="keySelect" aria-label="Select key">
+        <div class="learn-quick"><label class="field"><span>Key</span><select id="keySelect" aria-label="Select key">
                             <option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">E♭</option><option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7" selected>G</option><option value="8">A♭</option><option value="9">A</option><option value="10">B♭</option><option value="11">B</option>
                         </select></label>
                         <label class="field"><span>Scale / mode</span><select id="scaleSelect" aria-label="Select scale or musical mode">
@@ -277,6 +35,42 @@
                                 <option value="locrian">Locrian</option>
                             </optgroup>
                         </select></label>
+                        </div><section class="fretboard-card" aria-labelledby="fretboard-heading">
+            <div class="fretboard-heading-row">
+                <div><p class="section-kicker">Explore the neck</p><h2 id="fretboard-heading">Fretboard</h2></div>
+                <p class="swipe-hint"><span class="portrait-only">Swipe • rotate ↻ for wide view</span><span class="landscape-only">Landscape view • wider fretboard</span></p>
+            </div>
+            <div class="fretboard-scroll" tabindex="0" aria-label="Scrollable guitar fretboard"><div id="fretboard" class="fretboard"></div></div>
+            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Tap a note to hear it. Purple marks the current triad; the overview's colored dots show chord-tone membership.</p>
+        </section>
+
+        <section class="scale-summary" aria-live="polite">
+            <div class="summary-block"><p class="section-kicker">Primary</p><h2 id="scaleTitle">G major pentatonic</h2><div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div><p id="scaleModeInfo" class="summary-meta scale-mode-info" hidden></p></div>
+            <div id="triadSummary" class="summary-block"><p class="section-kicker triad-kicker">Secondary</p><h2 id="triadTitle">G major triad</h2><p id="triadMeta" class="summary-meta"></p><div id="triadNotes" class="note-chips triad-chips" aria-label="Triad notes"></div></div>
+            <div class="legend" aria-label="Fretboard legend">
+                <span><i class="legend-dot root-dot"></i> Scale root</span>
+                <span><i class="legend-dot scale-dot"></i> Scale tone</span>
+                <span><i class="legend-dot blue-note-dot"></i> Blue note</span>
+                <span><i class="legend-dot triad-dot"></i> Translucent triad</span>
+            </div>
+        </section>
+
+        <button id="playChordButton" class="secondary-button audio-button" type="button">▶ Hear current chord</button>
+
+        <details class="control-panel" id="settingsPanel">
+            <summary>Scale &amp; triad settings</summary>
+            <div class="section-heading">
+                <div><p class="section-kicker">Build your view</p><h2 id="controls-heading">Fretboard layers</h2></div>
+                <button id="resetButton" class="secondary-button" type="button">Reset to G</button>
+            </div>
+
+            <div class="layer-stack">
+                <section class="layer-card primary-layer" aria-labelledby="primary-layer-heading">
+                    <div class="layer-title-row">
+                        <span class="layer-swatch scale-swatch" aria-hidden="true"></span>
+                        <div><p class="layer-label">Primary layer</p><h3 id="primary-layer-heading">Scale</h3></div>
+                    </div>
+                    <div class="controls-grid primary-grid">
                         <label class="field"><span>Marker labels</span><select id="labelModeSelect" aria-label="Choose marker label style"><option value="notes" selected>Note names</option><option value="intervals">Scale intervals</option><option value="chord">Chord intervals</option></select></label>
                         <label class="field"><span>Fret range</span><select id="fretSelect" aria-label="Select fret range"><option value="12" selected>0–12</option><option value="15">0–15</option><option value="24">0–24</option></select></label>
                         <label class="field"><span>Practice area</span><select id="practiceAreaSelect"><option value="all">Whole fretboard</option><option value="0">Frets 0–4</option><option value="3">Frets 3–7</option><option value="5">Frets 5–9</option><option value="7">Frets 7–11</option><option value="9">Frets 9–13</option><option value="12">Frets 12–16</option></select></label>
@@ -333,28 +127,44 @@
                 <div id="overviewLegend" class="overview-legend"></div>
             </section>
 
-        <section class="scale-summary" aria-live="polite">
-            <div class="summary-block"><p class="section-kicker">Primary</p><h2 id="scaleTitle">G major pentatonic</h2><div id="scaleNotes" class="note-chips" aria-label="Scale notes"></div><p id="scaleModeInfo" class="summary-meta scale-mode-info" hidden></p></div>
-            <div id="triadSummary" class="summary-block"><p class="section-kicker triad-kicker">Secondary</p><h2 id="triadTitle">G major triad</h2><p id="triadMeta" class="summary-meta"></p><div id="triadNotes" class="note-chips triad-chips" aria-label="Triad notes"></div></div>
-            <div class="legend" aria-label="Fretboard legend">
-                <span><i class="legend-dot root-dot"></i> Scale root</span>
-                <span><i class="legend-dot scale-dot"></i> Scale tone</span>
-                <span><i class="legend-dot blue-note-dot"></i> Blue note</span>
-                <span><i class="legend-dot triad-dot"></i> Translucent triad</span>
-            </div>
-        </section>
-
-        <button id="playChordButton" class="secondary-button audio-button" type="button">▶ Hear current chord</button>
-
-        <details class="metronome-card tuner-card" id="tunerPanel">
-            <summary>Guitar tuner <span class="metronome-summary">Standard &amp; Drop D</span></summary>
+        </section><section id="view-practice" class="app-view" aria-labelledby="practice-heading" hidden>
+  <div class="view-heading"><div><p class="section-kicker">One small step at a time</p><h1 id="practice-heading" tabindex="-1">Find your fingerstyle</h1><p>Listen first. Learn the movement. Then find the rhythm.</p></div><button class="text-button" data-help="fingers">Picking hand ↗</button></div>
+  <div class="practice-intro"><span class="lesson-symbol" aria-hidden="true">♫</span><div><h2>Start with a steady thumb</h2><p>Try “One steady bass” at 55 BPM. There’s no rush.</p></div><button data-exercise="first-bass" class="primary-button">Begin level 1 →</button></div>
+  <div id="exerciseLibrary" class="exercise-library"></div>
+</section>
+<section id="view-play" class="app-view" aria-labelledby="gameTitle" hidden>
+  <div class="play-setup" id="playSetup">
+    <div class="play-title"><div><p class="section-kicker" id="gameLevel">Level 1 · Bass notes</p><h1 id="gameTitle" tabindex="-1">One steady bass</h1></div><button id="chooseExercise" class="text-button">Change exercise</button></div>
+    <details class="game-settings" id="gameSettings"><summary>Mode, tempo &amp; options <span id="setupSummary">Learn · 55 BPM</span></summary>
+      <div class="option-grid"><label class="field"><span>How would you like to play?</span><select id="gameMode"><option value="learn">Learn · waits for your note</option><option value="rhythm">Rhythm · play in time</option></select></label>
+      <label class="field"><span>Tempo · quarter-note BPM</span><input id="gameBpm" type="number" min="30" max="180" value="55" inputmode="numeric"></label>
+      <label class="check-label"><input id="gameFingers" type="checkbox" checked> Show P I M A finger hints</label>
+      <label class="check-label"><input id="gameClick" type="checkbox"> Metronome <small>Headphones help listening</small></label>
+      <label class="check-label"><input id="gameRepeat" type="checkbox"> Repeat automatically <small>One-bar lead-in</small></label>
+      <label class="field"><span>Timing window</span><select id="gameTolerance"><option value="0.22">Relaxed · ±220 ms</option><option value="0.16">Steady · ±160 ms</option><option value="0.10">Precise · ±100 ms</option></select></label>
+      <label class="field"><span>Swing · eighth notes</span><select id="gameSwing"><option value="0">Straight</option><option value="0.6">Gentle swing</option><option value="1">Triplet swing</option></select></label>
+      <label class="field"><span>Input timing offset · ms</span><input id="gameLatency" type="number" min="-300" max="400" step="5" value="0"><small>Positive = sound arrives late</small></label>
+      </div><button id="calibrateButton" class="secondary-button">Check microphone &amp; timing</button><p class="muted">Tune to standard E A D G B e. Your audio stays in this browser.</p>
+    </details>
+  </div>
+  <p class="rotate-hint">↻ Turn your phone sideways for a wider playing view.</p>
+  <div id="gameArena" class="game-arena">
+    <div class="arena-heading"><span id="gameChord">Open strings</span><span id="gameBeat">Ready when you are</span><span id="gameStats">0 played · streak 0</span></div>
+    <div class="tab-stage"><canvas id="tabCanvas" role="img" aria-label="Guitar tablature. High e at top, low E at bottom. Fret numbers approach the vertical playhead."></canvas></div>
+    <div class="game-feedback"><span id="gameFeedback" role="status">Pluck the highlighted note to begin.</span><button id="acceptPinch" class="text-button" hidden>Continue unscored →</button><button class="context-help" data-help="tab" aria-label="How to read this tablature">?</button></div>
+  </div>
+  <div class="transport-controls"><button id="gameStart" class="primary-button">▶ Start</button><button id="gameRestart" class="secondary-button" aria-label="Restart this exercise">↺ Restart</button><button id="gameListen" class="secondary-button">♪ Listen</button><label class="inline-tempo"><span>BPM</span><button id="tempoDown" aria-label="Decrease tempo by five">−</button><output id="tempoReadout">55</output><button id="tempoUp" aria-label="Increase tempo by five">+</button></label></div>
+  <p class="game-tip" id="gameTip">Use your thumb. Let your hand stay relaxed.</p>
+  <section id="gameResults" class="results-card" aria-labelledby="resultsHeading" hidden><h2 id="resultsHeading">A little progress, every time.</h2><p id="resultText"></p><div><button id="repeatExercise" class="primary-button">↺ Play again</button><button id="nextExercise" class="secondary-button">Next exercise →</button></div></section>
+  <details class="accessible-score"><summary>Text version of this exercise</summary><ol id="textScore"></ol></details>
+</section>
+<section id="view-tools" class="app-view" aria-labelledby="tools-heading" hidden><div class="view-heading"><div><p class="section-kicker">Before you play</p><h1 id="tools-heading" tabindex="-1">Get ready, find your pulse</h1><p>Two familiar tools. A little room to listen.</p></div></div><div class="tool-tabs" role="group" aria-label="Choose a tool"><button data-tool="tuner" aria-pressed="true">♮ Tuner</button><button data-tool="metronome" aria-pressed="false">♩ Metronome</button></div><div id="toolsContent"><section class="metronome-card tuner-card" id="tunerPanel" aria-label="Guitar tuner">
+            <h2 class="tool-title">Guitar tuner <span class="metronome-summary">Standard &amp; Drop D</span></h2>
             <p class="metronome-help">Allow microphone access, then pluck one open string at a time. Use headphones or stop the metronome while tuning.</p>
             <div class="metronome-controls">
                 <label class="field"><span>Tuning</span>
                     <select id="tunerTuning"><option value="standard">Standard · E A D G B e</option><option value="dropD">Drop D · D A D G B e</option></select>
                 </label>
-                <label class="field"><span>String</span><select id="tunerString"><option value="auto">Detect automatically</option></select></label>
-                <label class="field"><span>Tolerance</span><select id="tunerTolerance"><option value="10">Practice · ±10¢</option><option value="5">Fine · ±5¢</option></select></label>
                 <button id="tunerStart" class="secondary-button metronome-start" type="button" aria-pressed="false">🎙 Start tuner</button>
             </div>
             <p id="tunerStatus" class="metronome-help" role="status">Microphone off.</p>
@@ -362,61 +172,43 @@
                 <strong id="tunerNote">—</strong><span id="tunerFrequency">Play an open string</span>
                 <div class="tuner-meter" aria-hidden="true"><span class="tuner-in-tune-zone"></span><i id="tunerNeedle"></i></div>
                 <div class="tuner-meter-labels" aria-hidden="true"><span>Flat −50¢</span><span>0</span><span>+50¢ Sharp</span></div>
-                <span id="tunerFeedback">Flat ← &nbsp; In tune &nbsp; → Sharp</span>
+                <span id="tunerFeedback">Flat ←   In tune   → Sharp</span>
             </div>
             <p class="metronome-help">Green means in tune. A dimmed reading is held from the last pluck; pluck again for a live check.</p>
-        </details>
+        <details class="advanced-options"><summary>String &amp; precision</summary><div class="option-grid"><label class="field"><span>String</span><select id="tunerString"><option value="auto">Detect automatically</option></select></label>
+                <label class="field"><span>Tolerance</span><select id="tunerTolerance"><option value="10">Practice · ±10¢</option><option value="5">Fine · ±5¢</option></select></label>
+                </div></details></section>
 
-        <details class="metronome-card" id="metronomePanel">
-            <summary>Metronome <span class="metronome-summary">Tempo &amp; beat settings</span></summary>
+        <section class="metronome-card" id="metronomePanel" aria-label="Metronome" hidden="">
+            <h2 class="tool-title">Metronome <span class="metronome-summary">Tempo &amp; beat settings</span></h2>
             <div class="metronome-controls">
-                <label class="field"><span>Time signature</span>
-                    <select id="metronomeMeter">
-                        <option value="2/4">2/4</option><option value="3/4">3/4</option><option value="4/4" selected>4/4</option><option value="6/8">6/8</option>
-                    </select>
-                </label>
                 <label class="field"><span>Tempo · BPM</span>
                     <input id="metronomeBpm" type="number" min="40" max="240" step="1" value="100" inputmode="numeric">
-                </label>
-                <label class="field"><span>Subdivisions</span>
-                    <select id="metronomeSubdivision"><option value="2">Even: 1 &amp;</option><option value="3">Triplets: 1 trip let</option></select>
                 </label>
                 <label class="tempo-slider"><span class="visually-hidden">Adjust tempo</span>
                     <input id="metronomeSlider" type="range" min="40" max="240" step="1" value="100">
                 </label>
-                <label class="metronome-check"><input id="metronomeBeats" type="checkbox" checked> All numbered beats</label>
-                <label class="metronome-check"><input id="metronomeOffbeats" type="checkbox"> All subdivisions</label>
                 <button id="metronomeStart" class="secondary-button metronome-start" type="button" aria-pressed="false">▶ Start</button>
             </div>
             <p id="metronomeDescription" class="metronome-help">In 4/4, the tempo counts quarter notes. Beat 1 is accented; the “&amp;” falls halfway between beats.</p>
-            <p class="metronome-help">Tap a count to turn it on or off. Gold counts sound; the teal outline follows the rhythm.</p>
+            <p class="metronome-help">Tap a count to turn it on or off. Enabled counts sound; the bright outline follows the rhythm.</p>
             <div id="metronomeCount" class="metronome-count" role="group" aria-label="Choose which counts sound"></div>
             <p id="metronomeStatus" class="metronome-help" role="status">Stopped.</p>
-        </details>
+        <details class="advanced-options"><summary>Beat &amp; subdivision options</summary><div class="option-grid"><label class="field"><span>Time signature</span>
+                    <select id="metronomeMeter">
+                        <option value="2/4">2/4</option><option value="3/4">3/4</option><option value="4/4" selected>4/4</option><option value="6/8">6/8</option>
+                    </select>
+                </label>
+                <label class="field"><span>Subdivisions</span>
+                    <select id="metronomeSubdivision"><option value="2">Even: 1 &amp;</option><option value="3">Triplets: 1 trip let</option></select>
+                </label>
+                <label class="metronome-check"><input id="metronomeBeats" type="checkbox" checked> All numbered beats</label>
+                <label class="metronome-check"><input id="metronomeOffbeats" type="checkbox"> All subdivisions</label>
+                </div></details></section>
 
-        <section class="fretboard-card" aria-labelledby="fretboard-heading">
-            <div class="fretboard-heading-row">
-                <div><p class="section-kicker">Explore the neck</p><h2 id="fretboard-heading">Fretboard</h2></div>
-                <p class="swipe-hint"><span class="portrait-only">Swipe • rotate ↻ for wide view</span><span class="landscape-only">Landscape view • wider fretboard</span></p>
-            </div>
-            <div class="fretboard-scroll" tabindex="0" aria-label="Scrollable guitar fretboard"><div id="fretboard" class="fretboard"></div></div>
-            <p class="orientation-note">High <strong>e</strong> is on top; low <strong>E</strong> is on the bottom. Tap a note to hear it. Purple marks the current triad; the overview's colored dots show chord-tone membership.</p>
-        </section>
-
-        <section class="tip-card">
-            <div class="next-icon" aria-hidden="true">♬</div>
-            <div><p class="section-kicker">Try this</p><h2>Turn G pentatonic into a blues color</h2><p>Start with G major pentatonic and switch on Blue note to add B♭ (♭3). Switch to G minor pentatonic and the same control adds D♭ (♭5), the classic minor-blues passing tone.</p></div>
-        </section>
-
-        <footer><span>Guitar Visualizer</span><span>Open source · MIT License</span></footer>
-    </main>
-    <script src="script.js?v=0.14"></script>
-    <script src="tuner.js?v=0.13"></script>
-</body>
+        </div></section>
+<dialog id="helpDialog" class="help-dialog" aria-labelledby="helpTitle"><div class="dialog-heading"><h2 id="helpTitle">A little help</h2><button id="helpClose" class="icon-button" aria-label="Close help">×</button></div><div id="helpContent"></div><div class="dialog-footer"><button id="tourAgain" class="text-button">Take the quick tour</button></div></dialog>
+<dialog id="calibrationDialog" class="help-dialog" aria-labelledby="calibrationTitle"><div class="dialog-heading"><h2 id="calibrationTitle">Make room for your guitar</h2><button id="calibrationClose" class="icon-button" aria-label="Close microphone calibration">×</button></div><p id="calibrationMessage" role="status">First, stay quiet for two seconds so we can hear the room. Then pluck one open string with each click.</p><progress id="calibrationProgress" max="10" value="0" aria-label="Calibration progress"></progress><p class="muted">Use headphones. The timing step measures your device and your playing together; adjust the offset later if it feels early or late.</p><button id="calibrationStart" class="primary-button">Start room check</button></dialog>
+</main>
+    <script src="js/music.js?v=1.0"></script><script src="js/exercises.js?v=1.0"></script><script src="js/audio.js?v=1.0"></script><script src="script.js?v=1.0"></script><script src="tuner.js?v=1.0"></script><script src="js/game.js?v=1.0"></script><script src="js/app.js?v=1.0"></script></body>
 </html>
-
-
-
-
-
-

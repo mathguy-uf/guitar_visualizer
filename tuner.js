@@ -17,6 +17,7 @@ const tunerFeedback = document.getElementById("tunerFeedback");
 const tunerNeedle = document.getElementById("tunerNeedle");
 const tunerDisplay = document.getElementById("tunerDisplay");
 let tunerStream = null;
+let tunerSource = null;
 let tunerAudio = null;
 let tunerFrame = null;
 let tunerGeneration = 0;
@@ -177,9 +178,12 @@ function stopTuner() {
     tunerActive = false;
     if (tunerFrame !== null) cancelAnimationFrame(tunerFrame);
     tunerFrame = null;
-    if (tunerStream) tunerStream.getTracks().forEach(track => track.stop());
+    if (window.GuitarAudio) {
+        GuitarAudio.release("tuner");
+        tunerSource?.disconnect(); tunerSource = null;
+    } else if (tunerStream) tunerStream.getTracks().forEach(track => track.stop());
     tunerStream = null;
-    if (tunerAudio) { tunerAudio.close().catch(() => {}); tunerAudio = null; }
+    if (tunerAudio) { if (!window.GuitarAudio) tunerAudio.close().catch(() => {}); tunerAudio = null; }
     tunerStart.textContent = "🎙 Start tuner";
     tunerStart.setAttribute("aria-pressed", "false");
     tunerStatus.textContent = "Microphone off.";
@@ -193,6 +197,8 @@ async function startTuner() {
     }
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) { tunerStatus.textContent = "Audio is not supported in this browser."; return; }
+    if (window.GuitarGame) GuitarGame.pause("");
+    if (typeof stopMetronome === "function") stopMetronome();
     const generation = ++tunerGeneration;
     resetTunerDisplay();
     tunerActive = true;
@@ -200,13 +206,15 @@ async function startTuner() {
     tunerStart.setAttribute("aria-pressed", "true");
     tunerStatus.textContent = "Waiting for microphone permission…";
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+        const handle = window.GuitarAudio ? await GuitarAudio.acquire("tuner", () => { if (tunerActive) stopTuner(); }) : null;
+        const stream = handle ? handle.stream : await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
         if (!tunerActive || generation !== tunerGeneration) { stream.getTracks().forEach(track => track.stop()); return; }
         tunerStream = stream;
-        tunerAudio = new Audio();
+        tunerAudio = handle ? handle.context : new Audio();
         await tunerAudio.resume();
         if (!tunerActive || generation !== tunerGeneration) return;
-        const source = tunerAudio.createMediaStreamSource(stream);
+        const source = handle ? handle.source : tunerAudio.createMediaStreamSource(stream);
+        tunerSource = source;
         const analyser = tunerAudio.createAnalyser();
         analyser.fftSize = 4096;
         source.connect(analyser);

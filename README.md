@@ -1,3 +1,5 @@
+> **Guitar learning app:** This checkout adds Learn / Practice / Play / Tools navigation and a new fingerpicking game built from scratch. See [docs/REVIEW.md](docs/REVIEW.md) for functionality, architecture, testing, and current limitations. No build or runtime dependencies are required. The original feature reference follows below.
+
 # Guitar Visualizer
 
 A mobile-friendly interactive guitar fretboard for learning scales, pentatonics, blues notes, triads, intervals, inversions, chord shapes, and voice leading.

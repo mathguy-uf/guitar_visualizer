@@ -247,6 +247,8 @@ function stopMetronome() {
 }
 
 async function startMetronome() {
+    if (typeof stopTuner === "function") stopTuner();
+    if (window.GuitarGame) GuitarGame.pause("");
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) { metronomeStatus.textContent = "Audio is not supported in this browser."; return; }
     const generation = ++metronomeGeneration;
@@ -963,3 +965,7 @@ if (typeof ResizeObserver !== "undefined") {
 
 
 
+
+// Silence tools when the browser leaves the foreground.
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopMetronome(); });
+window.addEventListener("pagehide", stopMetronome);

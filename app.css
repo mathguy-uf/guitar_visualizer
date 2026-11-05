@@ -1,0 +1,1523 @@
+:root {
+    --bg: #171e1b;
+    --panel: #1e2823;
+    --panel-2: #26332c;
+    --border: #3a4a40;
+    --text: #f4f2e9;
+    --muted: #b5bfb5;
+    --accent: #c7dbb5;
+    --root: #f4c767;
+    --scale: #8cbfca;
+    --triad: #c5abdf;
+    --triad-strong: #e2ccf5;
+    --fret: #677b6a;
+    color-scheme: dark
+}
+
+body {
+    background: var(--bg);
+    line-height: 1.5
+}
+
+button,
+a,
+input,
+select,
+summary {
+    -webkit-tap-highlight-color: transparent
+}
+
+button {
+    cursor: pointer
+}
+
+button,
+input,
+select,
+summary {
+    min-height: 44px
+}
+
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+select:focus-visible,
+input:focus-visible {
+    outline: 3px solid #f4c767;
+    outline-offset: 3px
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: default
+}
+
+a {
+    color: var(--accent)
+}
+
+h1,
+h2,
+h3,
+p {
+    margin-top: 0
+}
+
+h1 {
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    font-weight: 600;
+    letter-spacing: -.045em;
+    margin-bottom: 8px
+}
+
+h2 {
+    font-size: 1.2rem;
+    font-weight: 600
+}
+
+h3 {
+    font-weight: 600
+}
+
+.app-shell {
+    width: min(1120px, 100%);
+    margin: auto;
+    padding: 0 28px 40px
+}
+
+.hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 0 20px;
+    gap: 12px
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 1.35rem;
+    font-weight: 650;
+    letter-spacing: -.03em
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 43px;
+    height: 43px;
+    font-size: 2rem;
+    color: var(--accent)
+}
+
+.brand small {
+    display: block;
+    font-size: .72rem;
+    color: var(--muted);
+    letter-spacing: 0;
+    font-weight: 400
+}
+
+.help-button,
+.icon-button {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text);
+    min-width: 44px;
+    font-size: 1.15rem;
+    padding: 0 14px
+}
+
+.help-button span {
+    font-size: .8rem;
+    margin-left: 8px
+}
+
+.primary-nav {
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: #101713;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 32px
+}
+
+.primary-nav button {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    color: var(--muted);
+    font-weight: 550;
+    min-height: 48px
+}
+
+.primary-nav button span {
+    font-size: 1.3rem;
+    line-height: 1
+}
+
+.primary-nav button[aria-current=page] {
+    color: #17231b;
+    background: var(--accent)
+}
+
+.view-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 24px 0
+}
+
+.view-heading p:last-child {
+    color: var(--muted);
+    margin: 0
+}
+
+.section-kicker {
+    font-size: .7rem;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 8px
+}
+
+.welcome-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--panel);
+    margin: 0 0 24px;
+    font-size: .9rem
+}
+
+.welcome-card div {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0
+}
+
+.welcome-card button,
+.secondary-button,
+.text-button {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 14px;
+    min-height: 44px;
+    font-weight: 550;
+    box-shadow: none
+}
+
+.text-button {
+    background: transparent;
+    border-color: transparent;
+    color: var(--accent)
+}
+
+.primary-button {
+    background: var(--accent);
+    color: #17231b;
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    min-height: 48px;
+    padding: 10px 20px;
+    font-weight: 700;
+    white-space: nowrap
+}
+
+.practice-modes {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    max-width: 520px
+}
+
+.practice-modes button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 500;
+    min-height: 44px;
+    border-radius: 8px
+}
+
+.practice-modes button[aria-pressed=true] {
+    background: var(--panel-2);
+    color: var(--text);
+    box-shadow: inset 0 -2px var(--accent)
+}
+
+.mode-description {
+    margin: 10px 0 18px;
+    max-width: 700px;
+    font-size: .85rem
+}
+
+.learn-quick {
+    display: grid;
+    grid-template-columns: 100px minmax(160px, 280px);
+    gap: 12px;
+    margin-bottom: 18px
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+.field>span {
+    font-size: .8rem;
+    font-weight: 550;
+    color: var(--muted)
+}
+
+select,
+input[type=number],
+input[type=text] {
+    min-height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #17201a;
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: .9rem;
+    width: 100%
+}
+
+.fretboard-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: none;
+    padding: 16px 0;
+    margin-bottom: 16px
+}
+
+.fretboard-heading-row {
+    padding: 0 16px
+}
+
+.fretboard-heading-row .section-kicker {
+    display: none
+}
+
+.fretboard-heading-row h2 {
+    font-size: 1rem
+}
+
+.orientation-note {
+    padding: 0 16px;
+    color: var(--muted);
+    font-size: .8rem
+}
+
+.fretboard {
+    --cell-width: 65px
+}
+
+.fret-cell {
+    height: 52px
+}
+
+.scale-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    margin: 12px 0 18px
+}
+
+.summary-block .section-kicker {
+    display: none
+}
+
+.summary-block h2 {
+    font-size: 1rem;
+    margin: 0 0 6px
+}
+
+.summary-meta {
+    color: var(--muted)
+}
+
+.note-chip {
+    min-height: 28px;
+    height: auto;
+    min-width: 38px;
+    background: var(--panel-2);
+    font-size: .75rem
+}
+
+.legend {
+    width: 100%;
+    font-size: .75rem;
+    gap: 18px
+}
+
+.control-panel,
+.progression-card,
+.layer-card,
+.metronome-card {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 14px;
+    box-shadow: none
+}
+
+.control-panel {
+    margin: 16px 0;
+    padding: 12px 16px
+}
+
+.control-panel summary,
+.game-settings summary,
+.advanced-options summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 550;
+    cursor: pointer;
+    list-style: none
+}
+
+.control-panel summary:before,
+.game-settings summary:before,
+.advanced-options summary:before {
+    content: '+';
+    color: var(--accent);
+    font-size: 1.25rem
+}
+
+.control-panel[open]>summary:before,
+.game-settings[open]>summary:before,
+.advanced-options[open]>summary:before {
+    content: '−'
+}
+
+.layer-card {
+    background: #19231d;
+    padding: 16px
+}
+
+.primary-grid,
+.overlay-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px
+}
+
+.layer-help {
+    font-size: .8rem
+}
+
+.layer-stack {
+    gap: 14px
+}
+
+.progression-card {
+    padding: 18px
+}
+
+.progression-entry input,
+.progression-entry button,
+.progression-nav button,
+.progression-chip {
+    background: var(--panel-2);
+    border-color: var(--border);
+    min-height: 44px
+}
+
+.layer-label {
+    color: var(--muted)
+}
+
+.progression-chip.active {
+    background: #334a37;
+    color: var(--text);
+    border-color: var(--accent)
+}
+
+.practice-intro {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid #61745e;
+    border-radius: 18px;
+    padding: 24px;
+    background: var(--panel);
+    margin-bottom: 30px
+}
+
+.practice-intro h2 {
+    margin-bottom: 5px
+}
+
+.practice-intro p {
+    color: var(--muted);
+    margin: 0
+}
+
+.practice-intro .primary-button {
+    margin-left: auto
+}
+
+.lesson-symbol {
+    font-size: 2.7rem;
+    color: var(--accent)
+}
+
+.exercise-library {
+    display: grid;
+    gap: 18px
+}
+
+.lesson-level {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--panel);
+    padding: 0 20px
+}
+
+.lesson-level>summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 0;
+    min-height: 84px
+}
+
+.level-number {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--accent);
+    flex-shrink: 0
+}
+
+.level-name {
+    display: block;
+    font-size: 1.05rem
+}
+
+.level-detail {
+    color: var(--muted);
+    display: block;
+    font-size: .8rem;
+    margin-top: 2px
+}
+
+.level-expand {
+    margin-left: auto;
+    color: var(--accent)
+}
+
+.exercise-row {
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    padding: 18px 0;
+    align-items: center
+}
+
+.exercise-row h3 {
+    font-size: 1rem;
+    margin: 0 0 4px
+}
+
+.exercise-row p {
+    color: var(--muted);
+    font-size: .85rem;
+    margin: 0 0 4px
+}
+
+.exercise-meta {
+    color: var(--muted);
+    font-size: .72rem
+}
+
+.exercise-actions {
+    display: flex;
+    gap: 8px
+}
+
+.exercise-actions button {
+    font-size: .85rem
+}
+
+.completed-label {
+    color: var(--accent);
+    margin-left: 8px
+}
+
+.tool-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px
+}
+
+.tool-tabs button {
+    min-width: 140px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    padding: 10px 18px
+}
+
+.tool-tabs [aria-pressed=true] {
+    color: var(--text);
+    border-color: var(--accent)
+}
+
+.metronome-card {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 22px
+}
+
+.metronome-card>summary {
+    list-style: none;
+    pointer-events: none;
+    font-size: 1.1rem;
+    font-weight: 600
+}
+
+.metronome-controls {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px
+}
+
+.tuner-card .metronome-controls {
+    grid-template-columns: 1fr auto;
+    align-items: end
+}
+
+.tuner-display {
+    margin-top: 22px;
+    min-height: 210px;
+    align-content: center;
+    gap: 16px
+}
+
+.tuner-display strong {
+    font-size: 2.2rem;
+    font-weight: 600
+}
+
+.tuner-display[data-state=in-tune] {
+    background: #263c2a;
+    border-color: #a7d49c;
+    animation: none
+}
+
+.tuner-display[data-state=held] {
+    opacity: .75
+}
+
+.tuner-display[data-state=in-tune] strong {
+    color: #e6f4d9
+}
+
+.metronome-help {
+    font-size: .83rem
+}
+
+.metronome-count {
+    margin-top: 18px;
+    gap: 8px
+}
+
+.metronome-count button {
+    min-width: 46px;
+    min-height: 48px;
+    background: #17201a
+}
+
+.metronome-count button[aria-pressed=true] {
+    background: #3d4930;
+    border-color: var(--accent);
+    color: #ecf2dd
+}
+
+.metronome-count button.current {
+    outline-color: var(--accent)
+}
+
+.advanced-options {
+    border-top: 1px solid var(--border);
+    margin-top: 22px;
+    padding-top: 10px
+}
+
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin: 12px 0 18px
+}
+
+.muted,
+small {
+    color: var(--muted)
+}
+
+small {
+    font-size: .75rem
+}
+
+.check-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .85rem;
+    flex-wrap: wrap;
+    min-height: 44px
+}
+
+.check-label small {
+    width: 100%;
+    padding-left: 30px
+}
+
+.check-label input {
+    width: 20px;
+    min-height: 20px;
+    height: 20px;
+    accent-color: var(--accent)
+}
+
+.play-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center
+}
+
+.play-title h1 {
+    font-size: 1.7rem;
+    margin-bottom: 5px
+}
+
+.play-title .section-kicker {
+    margin-bottom: 5px
+}
+
+.game-settings {
+    border-bottom: 1px solid var(--border);
+    margin: 12px 0 16px
+}
+
+.game-settings>summary {
+    font-size: .85rem;
+    justify-content: flex-start
+}
+
+.game-settings>summary span {
+    margin-left: auto;
+    font-size: .8rem;
+    color: var(--muted)
+}
+
+.rotate-hint {
+    display: none
+}
+
+.game-arena {
+    border: 1px solid #546351;
+    border-radius: 16px;
+    background: #101713;
+    overflow: hidden;
+    margin-top: 12px
+}
+
+.arena-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums
+}
+
+.arena-heading>span:first-child {
+    color: var(--accent);
+    font-weight: 650
+}
+
+.tab-stage {
+    height: 320px;
+    min-height: 150px;
+    position: relative
+}
+
+.tab-stage canvas {
+    display: block;
+    width: 100%;
+    height: 100%
+}
+
+.game-feedback {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 4px 12px 4px 18px;
+    background: #1b271f;
+    font-size: .85rem
+}
+
+.context-help {
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 36px;
+    min-height: 36px;
+    color: var(--text);
+    background: transparent;
+    flex-shrink: 0
+}
+
+.transport-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 16px
+}
+
+.transport-controls>.primary-button {
+    min-width: 155px
+}
+
+.inline-tempo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    font-size: .8rem
+}
+
+.inline-tempo button {
+    width: 44px;
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 1.2rem
+}
+
+.inline-tempo output {
+    font-variant-numeric: tabular-nums;
+    font-size: 1rem;
+    min-width: 28px;
+    text-align: center
+}
+
+.game-tip {
+    color: var(--muted);
+    font-size: .85rem;
+    margin: 16px 2px
+}
+
+.results-card {
+    padding: 20px;
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    background: var(--panel);
+    margin: 20px 0
+}
+
+.results-card div {
+    display: flex;
+    gap: 10px
+}
+
+.accessible-score {
+    color: var(--muted);
+    font-size: .85rem;
+    margin: 18px 0
+}
+
+.accessible-score li {
+    padding: 4px
+}
+
+.help-dialog {
+    width: min(600px, calc(100% - 28px));
+    max-height: 85dvh;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--panel);
+    color: var(--text);
+    padding: 24px;
+    box-shadow: 0 20px 80px #0008
+}
+
+.help-dialog::backdrop {
+    background: #000a
+}
+
+.dialog-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px
+}
+
+.dialog-heading h2 {
+    margin: 0;
+    font-size: 1.4rem
+}
+
+.icon-button {
+    font-size: 1.5rem;
+    padding: 0;
+    width: 44px
+}
+
+.dialog-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-top: 18px
+}
+
+.help-topic {
+    padding: 8px 0;
+    border-top: 1px solid var(--border)
+}
+
+.help-topic summary {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1rem
+}
+
+.help-topic p {
+    color: var(--muted);
+    font-size: .9rem;
+    line-height: 1.65
+}
+
+.help-topic svg {
+    display: block;
+    width: 100%;
+    max-height: 180px;
+    margin: 12px 0
+}
+
+.finger-guide {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    text-align: center
+}
+
+.finger-guide div {
+    padding: 12px 6px;
+    border: 1px solid var(--border);
+    border-radius: 10px
+}
+
+.finger-guide b {
+    display: block;
+    color: var(--accent);
+    font-size: 1.4rem
+}
+
+.count-guide {
+    display: flex;
+    gap: 6px;
+    margin: 10px 0
+}
+
+.count-guide span {
+    display: grid;
+    place-items: center;
+    min-width: 30px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 7px
+}
+
+.count-guide .accent {
+    color: #17231b;
+    background: var(--accent)
+}
+
+.tour-step {
+    color: var(--muted);
+    font-size: .8rem
+}
+
+.tour-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 24px
+}
+
+progress {
+    width: 100%;
+    accent-color: var(--accent);
+    height: 18px
+}
+
+@media(min-width:900px) {
+    .layer-stack {
+        grid-template-columns: 1fr 1fr
+    }
+
+    .app-view {
+        padding: 0 10px
+    }
+
+    .exercise-library {
+        grid-template-columns: 1fr
+    }
+
+    .primary-nav {
+        max-width: 700px
+    }
+}
+
+@media(max-width:650px) {
+    .app-shell {
+        padding: 0 max(16px, env(safe-area-inset-right)) calc(100px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))
+    }
+
+    .hero {
+        padding: 18px 0
+    }
+
+    .brand {
+        font-size: 1.2rem
+    }
+
+    .brand small {
+        font-size: .68rem
+    }
+
+    .help-button {
+        padding: 0;
+        width: 44px
+    }
+
+    .help-button span {
+        display: none
+    }
+
+    .primary-nav {
+        position: fixed;
+        z-index: 20;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        left: 12px;
+        right: 12px;
+        margin: 0;
+        box-shadow: 0 6px 35px #0008;
+        border-radius: 18px;
+        gap: 4px;
+        padding: 5px
+    }
+
+    .primary-nav button {
+        flex-direction: column;
+        gap: 2px;
+        min-height: 52px;
+        font-size: .7rem
+    }
+
+    .primary-nav button span {
+        font-size: 1.2rem
+    }
+
+    .view-heading {
+        margin: 16px 0 22px
+    }
+
+    .view-heading p:last-child {
+        font-size: .9rem
+    }
+
+    .welcome-card {
+        display: block;
+        padding: 14px;
+        margin-bottom: 18px
+    }
+
+    .welcome-card div {
+        margin-top: 8px
+    }
+
+    .learn-quick {
+        grid-template-columns: 90px 1fr
+    }
+
+    .learn-quick select {
+        font-size: .85rem;
+        min-height: 46px
+    }
+
+    .practice-modes button {
+        font-size: .8rem;
+        min-height: 44px
+    }
+
+    .fretboard {
+        --cell-width: 51px
+    }
+
+    .fret-cell {
+        height: 48px
+    }
+
+    .fretboard-card {
+        padding-top: 12px
+    }
+
+    .summary-block .note-chips {
+        gap: 5px
+    }
+
+    .scale-summary {
+        gap: 12px
+    }
+
+    .legend {
+        gap: 10px
+    }
+
+    .layer-stack {
+        grid-template-columns: 1fr
+    }
+
+    .primary-grid,
+    .overlay-grid {
+        grid-template-columns: 1fr 1fr
+    }
+
+    .control-panel {
+        padding: 10px 14px
+    }
+
+    .control-panel select {
+        min-height: 44px
+    }
+
+    .practice-intro {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        padding: 18px;
+        gap: 12px
+    }
+
+    .practice-intro .primary-button {
+        grid-column: 1/-1;
+        width: 100%;
+        margin-top: 4px
+    }
+
+    .practice-intro p {
+        font-size: .85rem
+    }
+
+    .lesson-level {
+        padding: 0 14px
+    }
+
+    .level-detail {
+        font-size: .75rem
+    }
+
+    .exercise-row {
+        grid-template-columns: 1fr;
+        gap: 8px
+    }
+
+    .exercise-actions {
+        justify-content: flex-end
+    }
+
+    .metronome-card {
+        padding: 16px
+    }
+
+    .tuner-card .metronome-controls {
+        grid-template-columns: 1fr
+    }
+
+    .tool-tabs button {
+        flex: 1;
+        min-width: 0
+    }
+
+    .tuner-display strong {
+        font-size: 1.8rem
+    }
+
+    .option-grid {
+        gap: 12px
+    }
+
+    .play-title h1 {
+        font-size: 1.4rem
+    }
+
+    .play-title .text-button {
+        font-size: .75rem;
+        padding: 4px 8px
+    }
+
+    .game-settings>summary {
+        font-size: .78rem
+    }
+
+    .game-settings>summary span {
+        font-size: .7rem
+    }
+
+    .rotate-hint {
+        display: block;
+        font-size: .78rem;
+        color: var(--accent);
+        margin: 10px 0
+    }
+
+    .tab-stage {
+        height: 280px
+    }
+
+    .arena-heading {
+        padding: 8px 10px;
+        font-size: .68rem;
+        gap: 5px
+    }
+
+    .transport-controls {
+        flex-wrap: wrap;
+        gap: 8px
+    }
+
+    .transport-controls>.primary-button {
+        min-width: 130px;
+        flex: 1
+    }
+
+    .transport-controls>.secondary-button {
+        font-size: .8rem;
+        padding: 8px 10px
+    }
+
+    .inline-tempo {
+        width: 100%;
+        justify-content: center;
+        margin: 0
+    }
+
+    .game-feedback {
+        font-size: .78rem;
+        padding-left: 12px
+    }
+
+    .results-card div {
+        flex-direction: column
+    }
+
+    .help-dialog {
+        padding: 18px
+    }
+
+    .help-topic p {
+        font-size: .85rem
+    }
+
+    .help-topic summary {
+        font-size: .92rem
+    }
+
+    .brand-mark {
+        width: 38px;
+        height: 38px
+    }
+
+    .accessible-score {
+        font-size: .8rem
+    }
+}
+
+@media(orientation:landscape) and (max-height:600px) {
+    body[data-section=play] .app-shell {
+        width: 100%;
+        height: 100dvh;
+        padding: 4px max(12px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        display: flex;
+        flex-direction: column
+    }
+
+    body[data-section=play] .hero {
+        display: none
+    }
+
+    body[data-section=play] .primary-nav {
+        position: static;
+        flex-shrink: 0;
+        max-width: none;
+        margin: 0 0 4px;
+        padding: 2px;
+        border-radius: 10px;
+        box-shadow: none
+    }
+
+    body[data-section=play] .primary-nav button {
+        min-height: 36px;
+        flex-direction: row;
+        font-size: .75rem;
+        gap: 6px
+    }
+
+    body[data-section=play] .primary-nav span {
+        font-size: 1rem
+    }
+
+    body[data-section=play] #view-play {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        padding: 0
+    }
+
+    body[data-section=play] .play-title {
+        height: 34px
+    }
+
+    body[data-section=play] .play-title h1 {
+        font-size: 1rem;
+        margin: 0
+    }
+
+    body[data-section=play] .play-title .section-kicker {
+        display: none
+    }
+
+    body[data-section=play] .play-title .text-button {
+        min-height: 32px;
+        font-size: .72rem
+    }
+
+    body[data-section=play] .game-settings {
+        margin: 0;
+        border: 0
+    }
+
+    body[data-section=play] .game-settings>summary {
+        min-height: 30px;
+        font-size: .72rem
+    }
+
+    body[data-section=play] .game-settings[open] {
+        position: absolute;
+        z-index: 25;
+        inset: 42px max(12px, env(safe-area-inset-right)) auto max(12px, env(safe-area-inset-left));
+        max-height: calc(100dvh - 54px);
+        overflow: auto;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        padding: 10px 18px;
+        border-radius: 12px
+    }
+
+    body[data-section=play] .game-arena {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-top: 3px;
+        border-radius: 10px;
+        min-height: 0
+    }
+
+    body[data-section=play] .arena-heading {
+        height: 28px;
+        padding: 3px 14px;
+        font-size: .72rem;
+        flex-shrink: 0
+    }
+
+    body[data-section=play] .tab-stage {
+        flex: 1;
+        height: auto;
+        min-height: 100px
+    }
+
+    body[data-section=play] .game-feedback {
+        height: 30px;
+        min-height: 30px;
+        padding: 0 8px 0 14px;
+        font-size: .75rem;
+        flex-shrink: 0
+    }
+
+    body[data-section=play] .context-help {
+        width: 28px;
+        min-height: 26px;
+        border-radius: 7px
+    }
+
+    body[data-section=play] .transport-controls {
+        margin-top: 5px;
+        flex-wrap: nowrap;
+        gap: 8px;
+        flex-shrink: 0
+    }
+
+    body[data-section=play] .transport-controls>button {
+        min-height: 42px;
+        padding: 6px 14px;
+        font-size: .82rem
+    }
+
+    body[data-section=play] .transport-controls>.primary-button {
+        min-width: 160px
+    }
+
+    body[data-section=play] .inline-tempo {
+        width: auto;
+        margin-left: auto;
+        font-size: .7rem
+    }
+
+    body[data-section=play] .inline-tempo button {
+        min-height: 40px;
+        height: 40px;
+        width: 42px
+    }
+
+    body[data-section=play] .game-tip {
+        display: none
+    }
+
+    body[data-section=play] .rotate-hint,
+    body[data-section=play] .accessible-score {
+        display: none
+    }
+
+    body[data-section=play] .results-card {
+        position: absolute;
+        z-index: 10;
+        top: 45px;
+        left: 15%;
+        right: 15%;
+        margin: 0;
+        max-height: calc(100dvh - 105px);
+        overflow: auto;
+        padding: 16px
+    }
+
+    body[data-section=play] .results-card h2 {
+        font-size: 1rem
+    }
+
+    body[data-section=play] .results-card p {
+        font-size: .8rem
+    }
+
+    body[data-section=play] .results-card div {
+        flex-direction: row
+    }
+
+    .help-dialog {
+        max-height: 92dvh
+    }
+
+    .hero {
+        min-height: 44px
+    }
+
+    .control-panel select {
+        min-height: 44px
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+        animation: none !important
+    }
+}
+
+@media(orientation:landscape) and (max-height:600px) {
+    body[data-section=play] .play-setup {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 36px
+    }
+
+    body[data-section=play] .play-title {
+        flex: 1;
+        min-width: 0
+    }
+
+    body[data-section=play] .play-title .text-button {
+        font-size: .7rem
+    }
+
+    body[data-section=play] .game-settings {
+        flex-shrink: 0
+    }
+
+    body[data-section=play].game-running .play-setup {
+        display: none
+    }
+
+    body[data-section=play] .game-feedback #acceptPinch {
+        font-size: .7rem;
+        min-height: 26px;
+        padding: 0 8px
+    }
+
+    body[data-section=play] .game-feedback>span {
+        flex: 1
+    }
+}
+
+.tool-title {
+    font-size: 1.1rem;
+    margin: 0 0 12px
+}
+
+.tool-title .metronome-summary {
+    display: block;
+    margin: 3px 0 0
+}
