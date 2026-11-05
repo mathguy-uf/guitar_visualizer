@@ -237,3 +237,15 @@ test('uncertain Learn pinches offer an explicit unscored continuation', async ()
     assert.equal(f.elements.acceptPinch.hidden, true);
     assert.match(f.elements.gameFeedback.textContent, /unscored/);
 });
+
+test('Listen completion restores the Start label and switching from playing starts the demo directly', async () => {
+    const f = fixture();
+    await f.click('gameStart');
+    await f.click('gameListen');
+    assert.ok(f.game.running);
+    assert.equal(f.acquired, 1);
+    assert.match(f.elements.gameListen.textContent, /Stop listening/);
+    f.advance(20);
+    assert.equal(f.game.running, false);
+    assert.equal(f.elements.gameStart.textContent, '▶ Start');
+});

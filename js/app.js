@@ -45,7 +45,7 @@
         document.querySelectorAll('.app-view').forEach(v => {
             v.hidden = v.id !== 'view-' + section;
         });
-        document.querySelectorAll('[data-section]').forEach(b => {
+        document.querySelectorAll('.primary-nav [data-section]').forEach(b => {
             if (b.dataset.section === section) b.setAttribute('aria-current', 'page');
             else b.removeAttribute('aria-current');
         });
@@ -215,7 +215,7 @@
         $('helpDialog').close();
         persist();
     }
-    document.querySelectorAll('[data-section]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.section)));
+    document.querySelectorAll('.primary-nav [data-section]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.section)));
     document.querySelector('.brand').addEventListener('click', e => {
         e.preventDefault();
         navigate('learn');

@@ -333,6 +333,7 @@
             say('That’s the pattern. Tap Start to try it yourself.');
             demo = false;
             finished = false;
+            setRunning(false);
             cursor = 0;
             displayCursor = 0;
             build();
@@ -686,7 +687,13 @@
         }
     });
     $('gameStart').addEventListener('click', () => start(false));
-    $('gameListen').addEventListener('click', () => running && demo ? pause('Listening stopped.') : start(true));
+    $('gameListen').addEventListener('click', () => {
+        if (running && demo) pause('Listening stopped.');
+        else {
+            if (running) pause('');
+            return start(true);
+        }
+    });
     $('gameRestart').addEventListener('click', () => {
         const resume = running,
             wasDemo = demo;
@@ -706,6 +713,9 @@
         updateSummary();
         reset();
     }));
+    $('gameLatency').addEventListener('change', () => {
+        $('gameLatency').value = Math.max(-300, Math.min(400, Math.round(Number($('gameLatency').value) || 0)));
+    });
     $('gameFingers').addEventListener('change', draw);
     $('calibrateButton').addEventListener('click', () => {
         pause();
