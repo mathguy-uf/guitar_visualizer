@@ -20,6 +20,7 @@
             const settings = Object.fromEntries(controls.map(c => [c.id, c.type === 'checkbox' ? c.checked : c.value]));
             localStorage.setItem(KEY, JSON.stringify({
                 version: 1,
+                loop: GuitarGame.loop,
                 section: current,
                 tool,
                 exercise: GuitarGame.exercise.id,
@@ -136,7 +137,7 @@
     }, {
         id: 'tab',
         title: 'Reading Tablature',
-        body: tabDiagram + `<p>Six lines are your six strings. The thin, high <b>e</b> is at the top; the thick, low <b>E</b> is at the bottom. A number tells you the fret: <b>0 = open string</b>.</p><p>Notes approach the bright vertical line. Play when they reach it. Numbers stacked vertically are a pinch: play them together. A line after a number means let it ring; a curved tie means hold it without plucking again. “Rest” means leave space.</p><p>The guitar must use standard tuning for the game. The tuner also offers Drop D.</p>`
+        body: tabDiagram + `<p>Six lines are your six strings. The thin, high <b>e</b> is at the top; the thick, low <b>E</b> is at the bottom. A number tells you the fret: <b>0 = open string</b>.</p><p>Notes approach the bright vertical line. Play when they reach it. Round markers are bass notes; square markers are treble. Numbers joined in a vertical stack are one pinch: play them together. A line after a number means let it ring; a small curved tie means keep holding without plucking again. There is no new fret-number attack on that tie. “Rest” means leave space.</p><p>The guitar must use standard tuning for the game. The tuner also offers Drop D.</p>`
     }, {
         id: 'fingers',
         title: 'Fingerpicking Basics',
@@ -148,15 +149,19 @@
     }, {
         id: 'rhythm',
         title: 'Understanding Rhythm',
-        body: `<div class="count-guide" aria-label="Eighth-note count: 1 and 2 and 3 and 4 and"><span class="accent">1</span><span>&amp;</span><span>2</span><span>&amp;</span><span>3</span><span>&amp;</span><span>4</span><span>&amp;</span></div><p><b>Quarter notes:</b> one on each numbered beat. <b>Eighth notes:</b> add the “&amp;” halfway between beats. <b>Sixteenths:</b> count “1 e &amp; a”. <b>Triplets:</b> three even notes in one beat: “1 trip let”.</p><p><b>Syncopation</b> puts notes or accents between the strong beats. Try keeping bass on 1 and 3 while playing treble on the &amp; of 2 and 4.</p><p>A dotted note lasts half as long again. Swing makes paired eighths long-short. Triplet and compound exercises keep their own even subdivisions. Game BPM always counts quarter notes; the standalone metronome labels its 6/8 pulse convention.</p><p>In Rhythm mode, early and late mean the pitch was right but the timing was off. The relaxed window gives you room to learn.</p>`
+        body: `<div class="count-guide" aria-label="Eighth-note count: 1 and 2 and 3 and 4 and"><span class="accent">1</span><span>&amp;</span><span>2</span><span>&amp;</span><span>3</span><span>&amp;</span><span>4</span><span>&amp;</span></div><p><b>Quarter notes:</b> one on each numbered beat. <b>Eighth notes:</b> add the “&amp;” halfway between beats. <b>Sixteenths:</b> count “1 e &amp; a”. <b>Triplets:</b> three even notes in one beat: “1 trip let”.</p><p>The count above the TAB automatically matches the exercise. It shows one useful subdivision, not every possible count. Hide it with <b>Mode &amp; options → Show rhythm counting</b>. The bright count follows the same clock as the notes; swing moves the “&amp;” later.</p><p>In 6/8, count <b>ONE two three FOUR five six</b> as two groups of three eighth notes.</p><p><b>Syncopation</b> puts notes or accents between the strong beats. Try keeping bass on 1 and 3 while playing treble on the &amp; of 2 and 4.</p><p>A dotted note lasts half as long again. Swing makes paired eighths long-short. Triplet and compound exercises keep their own even subdivisions. Game BPM always counts quarter notes; the standalone metronome labels its 6/8 pulse convention.</p><p>In Rhythm mode, early and late mean the pitch was right but the timing was off. The relaxed window gives you room to learn.</p>`
+    }, {
+        id: 'loop',
+        title: 'Looping a Measure',
+        body: `<p>Tap <b>Loop measures</b> beside the exercise title. Choose the first and last measure, then tap <b>Loop selection</b>. Choose the same measure twice to practise just that measure.</p><p>Tap <b>Start</b> to play or <b>Listen</b> to hear it. After one count-in, the phrase repeats without stopping. Use the large <b>− / + BPM</b> controls to slow it down or build speed. Learn mode still waits for each note.</p><p>The bass can keep a steady pulse while melody answers between beats. Start with “One note between beats”, then try “Melody between the beats”. Loop one measure until it feels comfortable.</p><p>Notes already ringing into the first measure are <b>plucked again</b> when the loop begins. Holds stop at the selected boundary; the next pass has its own fresh attack. Return to <b>Loop measures → Play whole exercise</b> when you are ready.</p>`
     }, {
         id: 'microphone',
         title: 'Using the Microphone',
-        body: `<p>Tap Start to request permission. Your guitar audio is processed here in the browser and is never uploaded or recorded.</p><p>Place the phone near your guitar, away from fans or other music. Open <b>Mode, tempo &amp; options → Check microphone &amp; timing</b>. Stay quiet for the room check, then pluck along with eight clicks using headphones.</p><p>The measured offset includes both your device delay and your playing. If notes consistently read late, increase the input timing offset a little. If they read early, reduce it.</p><p>Tuner and game take turns using the microphone. Pausing, changing sections, or leaving the app turns listening off. Tap Start to resume.</p>`
+        body: `<p>Tap Start to request permission. Your guitar audio is processed here in the browser and is never uploaded or recorded.</p><p>Place the phone near your guitar, away from fans or other music. Open <b>Mode &amp; options → Check microphone &amp; timing</b>. Stay quiet for the room check, then pluck along with eight clicks using headphones.</p><p>The measured offset includes both your device delay and your playing. If notes consistently read late, increase the input timing offset a little. If they read early, reduce it.</p><p>Tuner and game take turns using the microphone. Pausing, changing sections, or leaving the app turns listening off. Tap Start to resume.</p>`
     }, {
         id: 'trouble',
         title: 'Troubleshooting',
-        body: `<p><b>No notes heard?</b> Check the site’s microphone permission in Safari, move the phone closer, and recalibrate in a quieter room. Tune first and pluck clearly. Use Listen if microphone access is unavailable.</p><p><b>A note counted twice?</b> Let it decay, keep the room quiet, and stop nearby speakers. The detector looks for a fresh attack; a ringing string should not advance another note.</p><p><b>Pinches seem uncertain?</b> Harmonics and sustain can overlap. Some octave combinations cannot be separated reliably. In Learn mode, “Continue unscored” lets you move on after an uncertain pinch. Rhythm mode excludes uncertain pinches from judged accuracy. These are not marked wrong.</p><p><b>The screen is small?</b> Turn your phone sideways. Close the options before playing. Safari’s address bar and your phone’s text size can change the available space.</p><p><b>Audio stopped?</b> Returning from a call, locking the phone, or changing apps pauses the exercise. Tap Start again. Lower the tempo if consecutive notes aren’t clear.</p>`
+        body: `<p><b>No notes heard?</b> Check the site’s microphone permission in Safari, move the phone closer, and recalibrate in a quieter room. Tune first and pluck clearly. Use Listen if microphone access is unavailable.</p><p><b>A note counted twice?</b> Let it decay, keep the room quiet, and stop nearby speakers. The detector looks for a fresh attack; a ringing string should not advance another note.</p><p><b>Pinches seem uncertain?</b> Harmonics and sustain can overlap. Some octave combinations cannot be separated reliably. In Learn mode, “Continue unscored” lets you move on after an uncertain pinch. Rhythm mode leaves uncertain readings unscored and allows a clearer reading before the note’s timing window closes. These are not marked wrong.</p><p><b>The screen is small?</b> Turn your phone sideways. Close the options before playing. Safari’s address bar and your phone’s text size can change the available space.</p><p><b>Audio stopped?</b> Returning from a call, locking the phone, or changing apps pauses the exercise. Tap Start again. Lower the tempo if consecutive notes aren’t clear.</p>`
     }];
 
     function showHelp(which = 'context') {
@@ -273,6 +278,7 @@
     populateTunerStrings();
     resetTunerDisplay();
     if (saved.noiseFloor) GuitarGame.noiseFloor = saved.noiseFloor;
+    if (saved.loop?.exercise === GuitarGame.exercise.id && saved.loop.enabled) GuitarGame.setLoop(saved.loop.first, saved.loop.last);
     GuitarGame.reset();
     $('gameBpm').dispatchEvent(new Event('change'));
     $('welcome').hidden = !!saved.welcomed;

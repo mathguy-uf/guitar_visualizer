@@ -103,16 +103,16 @@
         notes: [n(i % 2 ? 4 : 6), n(3)],
         accent: i % 4 === 0
     }))));
-    data.push(exercise('three-pinch', 4, 'Three strings together', 'Thumb, middle, and ring on open E, B, e.', 'Keep the three attacks together. Use a quiet room.', 50, Array.from({
+    data.push(exercise('three-pinch', 4, 'Three strings together', 'Thumb, middle, and ring on open D, B, e.', 'Keep the three attacks together. Use a quiet room.', 50, Array.from({
         length: 4
     }, (_, i) => ({
         tick: i * 2 * Q,
         duration: 2 * Q,
-        notes: [n(6), n(2), n(1)]
+        notes: [n(4), n(2), n(1)]
     }))));
     const pinchRoll = singles([6, 3, 2, 1, 4, 3, 2, 1], E);
     pinchRoll.forEach((e, i) => {
-        if (i % 4 === 0) e.notes.push(n(1));
+        if (i % 4 === 0) e.notes.push(n(i % 8 === 0 ? 3 : 1));
     });
     data.push(exercise('pinch-roll', 4, 'Pinch into a roll', 'A bass-and-treble pinch starts each half bar.', 'Release into the roll without rushing the next note.', 55, pinchRoll));
     const sync = [];
@@ -218,9 +218,66 @@
         }));
     }
     data.push({
-        ...exercise('blues', 5, 'Front porch blues', 'A steady thumb with answering treble notes.', 'Try a little swing in More options. Keep the bass unhurried.', 55, blues),
+        ...exercise('blues', 5, 'Front porch blues', 'A steady thumb with answering treble notes.', 'Try a little swing in Mode & options. Keep the bass unhurried.', 55, blues),
         swing: .6
     });
+    // Short answering phrases develop independence before adding denser rhythm.
+    function independent(id, title, description, tip, chords, trebleBeats, bpm = 55) {
+        const events = [],
+            changes = [];
+        chords.forEach((chord, bar) => {
+            changes.push({
+                tick: bar * 4 * Q,
+                chord
+            });
+            const root = chord === 'C' || chord === 'Am' ? 5 : chord === 'D' ? 4 : 6;
+            const alternate = chord === 'D' ? 5 : chord === 'Em' ? 5 : 4;
+            for (const [index, beat] of [0, 2].entries()) {
+                const string = index ? alternate : root;
+                events.push({
+                    tick: (bar * 4 + beat) * Q,
+                    duration: Q,
+                    notes: [n(string, chord === 'D' && string === 5 ? 0 : shapes[chord][string - 1])],
+                    voice: 'bass',
+                    accent: true
+                });
+            }
+            trebleBeats.forEach((beat, i) => {
+                const string = i % 2 ? 1 : 2;
+                const duration = (beat * 4) % 2 ? S : E;
+                events.push({
+                    tick: (bar * 4 + beat) * Q,
+                    duration,
+                    notes: [n(string, shapes[chord][string - 1])],
+                    voice: 'treble'
+                });
+            });
+        });
+        return {
+            ...exercise(id, 5, title, description, tip, bpm, events, chords.length * 4 * Q, [4, 4], changes),
+            lesson: 'Keep the round bass notes steady. The square melody notes answer between the beats.'
+        };
+    }
+    const firstOffbeat = independent('one-offbeat', 'One note between beats', 'G bass on 1 and 3; one B-string answer on the & of 4.', 'Count aloud. Let your thumb keep its own quiet pulse.', ['G', 'G'], [3.5]);
+    const between = independent('between-beats', 'Melody between the beats', 'G → Em → Am → D, with a melody note on each &.', 'Keep the same relaxed bass pulse while your fingers answer.', ['G', 'Em', 'Am', 'D'], [.5, 1.5, 2.5, 3.5]);
+    const small = independent('sixteenth-answer', 'The last little sixteenth', 'A steady bass with melody on the a of 2 and 4.', 'Count 1 e & a. Place each melody note just before the next beat.', ['G', 'C', 'D', 'G'], [1.75, 3.75], 40);
+    const folk = independent('folk-answer', 'A folk-style answer', 'A short melody answers an alternating bass through G, D, Em, C.', 'Try looping one measure until your hand can play it without rushing.', ['G', 'D', 'Em', 'C'], [.5, 1.5], 55);
+    const tied = independent('tied-melody', 'Melody across a bass beat', 'A melody note on the & of 2 rings through the next bass note.', 'Let the melody ring while your thumb plays beat 3. Do not pick the tied note again.', ['G', 'C'], [1.5, 3.5], 50);
+    tied.events.filter(e => e.voice === 'treble' && e.tick % (4 * Q) === 1.5 * Q).forEach(e => {
+        tied.events.push({
+            tick: e.tick + E,
+            duration: E,
+            notes: e.notes.map(note => ({
+                ...note
+            })),
+            voice: 'treble',
+            tie: true
+        });
+    });
+    data.splice(data.findIndex(e => e.id === 'offbeat'), 0, firstOffbeat);
+    data.splice(data.findIndex(e => e.id === 'sixteenths'), 0, between, folk);
+    data.splice(data.findIndex(e => e.id === 'dotted'), 0, small);
+    data.splice(data.findIndex(e => e.id === 'triplets'), 0, tied);
     return {
         data,
         shapes,

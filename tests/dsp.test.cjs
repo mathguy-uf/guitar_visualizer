@@ -105,3 +105,17 @@ test('expected-pitch attack evidence finds treble plucks over a ringing bass', (
     assert.ok(attacks.some(e => e.pitches.some(m => Math.abs(m - 55) < .4)));
     assert.ok(attacks.some(e => e.pitches.some(m => Math.abs(m - 59) < .4)));
 });
+
+test('all authored pinch groups are distinguishable under the production harmonic rules', () => {
+    const M = require('../js/music.js'),
+        E = require('../js/exercises.js');
+    for (const exercise of E.data)
+        for (const event of M.compile(exercise))
+            if (event.targets.length > 1) {
+                for (const rate of [44100, 48000]) {
+                    const r = D.analyse(signal(event.targets, rate), rate, event.targets);
+                    assert.ok(r.confidence >= .72, `${exercise.id}, tick ${event.tick}, ${event.targets}, ${rate} Hz`);
+                    assert.deepEqual(r.pitches, event.targets);
+                }
+            }
+});

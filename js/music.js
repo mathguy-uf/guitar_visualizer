@@ -34,17 +34,22 @@
                 tick,
                 duration: end - tick,
                 notes: [],
+                rests: [],
                 accent: false,
                 rest: true
             });
             const group = groups.get(tick);
             group.duration = Math.max(group.duration, end - tick);
             group.accent ||= !!e.accent;
+            if (!notes.length) group.rests.push({
+                voice: e.voice || 'all',
+                duration: end - tick
+            });
             for (const n of notes) {
                 const note = {
                     ...n,
                     midi: tuning[n.string - 1] + n.fret,
-                    voice: e.voice || 'treble',
+                    voice: e.voice || (n.string >= 4 ? 'bass' : 'treble'),
                     tie: !!e.tie,
                     duration: end - tick
                 };
@@ -65,14 +70,22 @@
             this.tick = 0;
             this.running = false;
             this.anchor = 0;
+            this.segments = [];
         }
         position(time = this.now()) {
-            return this.tick + (this.running ? (time - this.anchor) * this.bpm / 60 * PPQ : 0);
+            if (!this.running) return this.tick;
+            const segment = [...this.segments].reverse().find(s => s.anchor <= time) || this.segments[0];
+            return segment.tick + (time - segment.anchor) * segment.bpm / 60 * PPQ;
         }
         start(tick = this.tick) {
             this.tick = tick;
             this.anchor = this.now();
             this.running = true;
+            this.segments = [{
+                anchor: this.anchor,
+                tick: this.tick,
+                bpm: this.bpm
+            }];
         }
         pause() {
             this.tick = this.position();
@@ -81,14 +94,26 @@
         seek(tick) {
             this.tick = tick;
             this.anchor = this.now();
+            if (this.running) this.segments = [{
+                anchor: this.anchor,
+                tick,
+                bpm: this.bpm
+            }];
         }
         setTempo(bpm) {
             this.tick = this.position();
             this.anchor = this.now();
             this.bpm = Math.max(30, Math.min(180, Number(bpm) || 60));
+            if (this.running) this.segments.push({
+                anchor: this.anchor,
+                tick: this.tick,
+                bpm: this.bpm
+            });
         }
         timeAt(tick) {
-            return this.anchor + (tick - this.tick) / PPQ * 60 / this.bpm;
+            const segment = [...this.segments].reverse().find(s => s.tick <= tick) || this.segments[0];
+            return segment ? segment.anchor + (tick - segment.tick) / PPQ * 60 / segment.bpm :
+                this.anchor + (tick - this.tick) / PPQ * 60 / this.bpm;
         }
     }
     class Session {
@@ -97,64 +122,100 @@
             this.mode = mode;
             this.tolerance = tolerance;
             this.results = new Map();
+            this.uncertain = new Set();
             this.extras = 0;
             this.wrong = 0;
             this.streak = 0;
             this.best = 0;
+            this.archived = {
+                total: 0,
+                hits: 0,
+                onTime: 0,
+                missed: 0,
+                uncertain: 0,
+                judged: 0,
+                seconds: 0
+            };
+        }
+        archiveBefore(tick, unscored = false) {
+            const kept = [];
+            for (const e of this.events) {
+                const r = this.results.get(e.id);
+                if (e.tick + e.duration >= tick || (e.targets.length && !r && !unscored)) {
+                    kept.push(e);
+                    continue;
+                }
+                if (e.targets.length) {
+                    this.archived.total++;
+                    if (r) {
+                        if (r.kind === 'uncertain') this.archived.uncertain++;
+                        else this.archived.judged++;
+                        if (r.kind === 'missed') this.archived.missed++;
+                        if (['correct', 'early', 'late'].includes(r.kind)) {
+                            this.archived.hits++;
+                            this.archived.seconds += Math.abs(r.seconds);
+                        }
+                        if (r.kind === 'correct') this.archived.onTime++;
+                    }
+                }
+                this.results.delete(e.id);
+                this.uncertain.delete(e.id);
+            }
+            this.events.splice(0, this.events.length, ...kept);
         }
         next() {
             return this.events.find(e => e.targets.length && !this.results.has(e.id));
         }
-        expire(tick, bpm) {
-            const margin = this.tolerance * bpm / 60 * PPQ;
+        expire(tick, bpm, secondsSince = null) {
             if (this.mode === 'learn') return;
-            for (const e of this.events)
-                if (e.targets.length && !this.results.has(e.id) && tick > e.tick + margin) {
+            for (const e of this.events) {
+                const elapsed = secondsSince ? secondsSince(e) : (tick - e.tick) / PPQ * 60 / bpm;
+                if (e.targets.length && !this.results.has(e.id) && elapsed > this.tolerance + 1e-9) {
+                    const uncertain = this.uncertain.delete(e.id);
                     this.results.set(e.id, {
-                        kind: 'missed'
+                        kind: uncertain ? 'uncertain' : 'missed'
                     });
-                    this.streak = 0;
+                    if (!uncertain) this.streak = 0;
                 }
+            }
         }
         input({
             tick,
             pitches,
-            confidence = 1
+            confidence = 1,
+            time = null,
+            timeAt = null,
+            eventId = null
         }, bpm) {
             const available = this.events.filter(e => e.targets.length && !this.results.has(e.id));
-            const e = this.mode === 'learn' ? available[0] : available.reduce((best, e) => !best || Math.abs(e.tick - tick) < Math.abs(best.tick - tick) ? e : best, null);
-            if (!e) {
-                this.extras++;
+            const error = e => timeAt && Number.isFinite(time) ? time - timeAt(e.tick) : (tick - e.tick) / PPQ * 60 / bpm;
+            const matches = e => e.targets.every(m => pitches.some(p => Math.abs(p - m) <= .45));
+            const nearest = list => list.reduce((best, e) => !best || Math.abs(error(e)) < Math.abs(error(best)) ? e : best, null);
+            const inWindow = this.mode === 'learn' ? available.slice(0, 1) :
+                available.filter(e => Math.abs(error(e)) <= this.tolerance + 1e-9);
+            // A nearby different pitch must not steal a correct early/late note
+            // when fast subdivisions have overlapping tolerance windows.
+            const unclear = confidence < .60 || !pitches.length;
+            const hinted = inWindow.find(e => e.id === eventId);
+            const e = unclear ? hinted || nearest(inWindow) :
+                nearest(inWindow.filter(matches)) || hinted || nearest(inWindow);
+            if (unclear || (e && e.targets.length > 1 && (!matches(e) || confidence < .72))) {
+                // Keep the event available until its deadline. A clear retry
+                // can replace uncertainty; an ambiguous reading never scores extra.
+                if (e && this.mode !== 'learn') this.uncertain.add(e.id);
                 return {
-                    kind: 'extra'
+                    kind: 'uncertain',
+                    event: e || undefined
                 };
             }
-            const seconds = (tick - e.tick) / PPQ * 60 / bpm;
-            if (this.mode === 'rhythm' && Math.abs(seconds) > this.tolerance) {
+            if (!e) {
                 this.extras++;
                 this.streak = 0;
                 return {
                     kind: 'extra'
                 };
             }
-            const match = e.targets.every(m => pitches.some(p => Math.abs(p - m) <= .45));
-            // Partial/ambiguous pinches remain open for a retry and are reported
-            // separately at the end; they never become a wrong-pitch penalty.
-            if (e.targets.length > 1 && (!match || confidence < .72)) {
-                this.results.set(e.id, {
-                    kind: 'uncertain'
-                });
-                if (this.mode === 'learn') this.results.delete(e.id);
-                return {
-                    kind: 'uncertain',
-                    event: e
-                };
-            }
-            if (confidence < .60 || !pitches.length) return {
-                kind: 'uncertain',
-                event: e
-            };
-            if (!match) {
+            if (!matches(e)) {
                 this.wrong++;
                 this.streak = 0;
                 return {
@@ -162,6 +223,7 @@
                     event: e
                 };
             }
+            const seconds = this.mode === 'learn' ? 0 : error(e);
             const kind = this.mode === 'learn' || Math.abs(seconds) <= .065 ? 'correct' : seconds < 0 ? 'early' : 'late';
             const unexpected = pitches.filter(p => !e.targets.some(m => Math.abs(p - m) <= .45));
             this.extras += unexpected.length;
@@ -171,6 +233,7 @@
                 event: e,
                 extra: unexpected.length
             };
+            this.uncertain.delete(e.id);
             this.results.set(e.id, result);
             this.streak++;
             this.best = Math.max(this.best, this.streak);
@@ -180,17 +243,19 @@
             const values = [...this.results.values()];
             const hits = values.filter(r => ['correct', 'early', 'late'].includes(r.kind));
             const judged = values.filter(r => r.kind !== 'uncertain');
+            const hitCount = hits.length + this.archived.hits,
+                judgedCount = judged.length + this.archived.judged;
             return {
-                total: this.events.filter(e => e.targets.length).length,
-                hits: hits.length,
-                onTime: values.filter(r => r.kind === 'correct').length,
-                missed: values.filter(r => r.kind === 'missed').length,
-                uncertain: values.filter(r => r.kind === 'uncertain').length,
+                total: this.events.filter(e => e.targets.length).length + this.archived.total,
+                hits: hitCount,
+                onTime: values.filter(r => r.kind === 'correct').length + this.archived.onTime,
+                missed: values.filter(r => r.kind === 'missed').length + this.archived.missed,
+                uncertain: values.filter(r => r.kind === 'uncertain').length + this.archived.uncertain,
                 wrong: this.wrong,
                 extras: this.extras,
                 best: this.best,
-                accuracy: judged.length ? Math.round(100 * hits.length / judged.length) : null,
-                meanMs: hits.length ? Math.round(hits.reduce((s, r) => s + Math.abs(r.seconds), 0) / hits.length * 1000) : null
+                accuracy: judgedCount ? Math.round(100 * hitCount / judgedCount) : null,
+                meanMs: hitCount ? Math.round((hits.reduce((s, r) => s + Math.abs(r.seconds), 0) + this.archived.seconds) / hitCount * 1000) : null
             };
         }
     }

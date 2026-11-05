@@ -64,24 +64,36 @@
             throw error;
         }
     }
-    async function listen(handle, callback) {
+    async function listen(handle, callback, targetForFrame = null) {
         if (!handle.context.audioWorklet || typeof Worker === 'undefined') throw Error('Live listening needs AudioWorklet support. You can still use Listen to learn the pattern.');
         await handle.context.audioWorklet.addModule('js/capture-worklet.js');
-        const worker = new Worker('js/analysis-worker.js');
+        const worker = new Worker('js/analysis-worker.js?v=1.2');
         const node = new AudioWorkletNode(handle.context, 'guitar-capture');
         const mute = handle.context.createGain();
         mute.gain.value = 0;
         let inFlight = false,
-            pending = null,
+            pending = [],
             active = true;
         const send = data => {
             inFlight = true;
+            if (targetForFrame) data.target = targetForFrame(data.time - data.samples.length / data.rate / 2);
             worker.postMessage(data, [data.samples.buffer]);
         };
         node.port.onmessage = ({
             data
         }) => {
-            if (inFlight) pending = data;
+            if (!active) return;
+            // Keep ordered windows rather than replacing queued attacks with the
+            // newest frame. Bound latency; pause safely if analysis falls behind.
+            if (pending.length >= 24 || handle.context.currentTime - data.time > .5) {
+                active = false;
+                callback({
+                    type: 'error',
+                    message: 'Listening fell behind. Tap Start to continue without losing your place.'
+                });
+                return;
+            }
+            if (inFlight) pending.push(data);
             else send(data);
         };
         worker.onmessage = ({
@@ -90,11 +102,7 @@
             if (!active) return;
             inFlight = false;
             callback(data);
-            if (active && pending) {
-                const newest = pending;
-                pending = null;
-                send(newest);
-            }
+            if (active && pending.length) send(pending.shift());
         };
         worker.onerror = () => callback({
             type: 'error',
@@ -125,7 +133,7 @@
             },
             stop() {
                 active = false;
-                pending = null;
+                pending = [];
                 node.port.onmessage = null;
                 worker.onmessage = null;
                 worker.onerror = null;

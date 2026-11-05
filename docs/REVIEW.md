@@ -11,8 +11,8 @@ Local branch: `interface-fingerpicking-review`
 | Section | Experience |
 |---|---|
 | Learn | Existing interactive fretboard, scales/modes, pentatonic patterns, triad inversions, and progression work. Key and scale are visible; detailed controls are collapsed. |
-| Practice | Nineteen short exercises in five levels, each with a playing cue, suggested tempo, and Listen/Practice actions. |
-| Play | Landscape scrolling TAB, fixed playhead, six strings, beat numbers, chord cues, finger hints, Learn and Rhythm modes. Large Start/Pause, Restart, Listen, and tempo buttons. |
+| Practice | Twenty-four short exercises in five levels, each with a playing cue, suggested tempo, and Listen/Practice actions. |
+| Play | Landscape scrolling TAB, fixed playhead, six strings, adaptive rhythm counts, bass/treble shapes, measure loops, chord cues, finger hints, Learn and Rhythm modes. Large Start/Pause, Restart, Listen, and tempo buttons. |
 | Tools | Separate tuner/metronome views. Common actions are visible; string precision, meter, subdivisions, and group selections are behind disclosures. |
 | Help | Seven topics, a TAB diagram, P/I/M/A guide, contextual entry points, and a skippable three-step tour. |
 
@@ -36,7 +36,7 @@ The interface uses restrained green, warm neutral text, consistent touch control
 - Worker analysis, causal audio timestamps, an input timing offset, room-noise calibration, and a guided eight-pluck timing check.
 - Shared microphone ownership for tuner/game; cancelled permission requests stop late-arriving streams. Backgrounding, navigation, and tool changes stop listening.
 - Expected-pitch evidence, fundamental estimation, fresh-attack gating, and spectral-change evidence for a new treble pluck over a ringing bass.
-- Conservative expected-note pinch analysis. Uncertain pinches are separate from wrong notes. Learn offers an explicit **Continue unscored** action; Rhythm excludes uncertain pinches from judged accuracy.
+- Conservative expected-note pinch analysis. Uncertain pinches are separate from wrong notes. Learn offers an explicit **Continue unscored** action; Rhythm leaves uncertain readings open for a clearer result, then excludes unresolved uncertainty from judged accuracy.
 - Text version of the exercise and changing accessible target descriptions alongside the animated canvas.
 
 ## Exercise progression
@@ -57,7 +57,7 @@ Advanced rhythms above are actual exercises and playback/scoring events, not jus
 - Triplets use 320 ticks; eighths 480; sixteenths 240. Rests have no notes; tied continuations have no new scoring target.
 - `js/audio.js`: microphone ownership, context reuse, silent capture routing, playback, and analysis lifecycle.
 - `js/capture-worklet.js`: audio-thread capture, 4096-sample causal windows, 1024-sample hops, and sample-clock timestamps. No microphone monitoring through speakers.
-- `js/analysis-worker.js` / `js/dsp.js`: off-main-thread fundamental and candidate-frequency analysis, harmonic caution, and attack gating. Backpressure retains only the newest pending audio window.
+- `js/analysis-worker.js` / `js/dsp.js`: off-main-thread fundamental and candidate-frequency analysis, harmonic caution, and attack gating. Audio windows are processed in order. A bounded queue allows analysis to catch up; excessive delay pauses listening and revisits the unanalysed gap instead of discarding plucks or charging misses.
 - `js/game.js`: session controller, scheduling, calibration, TAB drawing, and feedback.
 - `js/app.js`: navigation, local persistence, library, help, and onboarding.
 
@@ -101,3 +101,11 @@ python3 -m http.server 8000
 ```
 
 Open `http://localhost:8000` on that computer. Localhost supports microphone permission in browsers that provide the required audio APIs; opening `index.html` directly is insufficient for full microphone/worker functionality. Test on an HTTPS host for a physical iPhone. Publication uses the repository’s existing GitHub Pages configuration.
+
+## Local scoring corrections awaiting approval
+
+See [SCORING_REVIEW.md](SCORING_REVIEW.md) for the proposed audio/scoring fixes, regression coverage, and remaining limitations. These corrections have not been pushed.
+
+## Local rhythm improvements awaiting approval
+
+See [RHYTHM_REVIEW.md](RHYTHM_REVIEW.md) for adaptive counting, syncopation lessons, measure looping, timing examples, and validation. These changes build on the unpushed scoring corrections above.

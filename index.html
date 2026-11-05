@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Guitar — Learn, practice, play</title>
     <link rel="stylesheet" href="style.css?v=1.0">
-    <link rel="stylesheet" href="legacy-layout.css?v=1.0"><link rel="stylesheet" href="app.css?v=1.0"></head>
+    <link rel="stylesheet" href="legacy-layout.css?v=1.0"><link rel="stylesheet" href="app.css?v=1.3"></head>
 <body>
     <main class="app-shell">
         <header class="hero"><a class="brand" href="#learn" aria-label="Guitar home"><span class="brand-mark" aria-hidden="true">♮</span><span>Guitar<small>A little practice, every day.</small></span></a><button type="button" class="help-button" data-help="context" aria-label="Help for this screen">?<span>Help</span></button></header><nav class="primary-nav" aria-label="Main sections"><button data-section="learn" aria-current="page"><span aria-hidden="true">▦</span>Learn</button><button data-section="practice"><span aria-hidden="true">♫</span>Practice</button><button data-section="play"><span aria-hidden="true">▷</span>Play</button><button data-section="tools"><span aria-hidden="true">♮</span>Tools</button></nav><section id="view-learn" class="app-view" aria-labelledby="learn-heading"><div class="view-heading"><div><p class="section-kicker">Make yourself at home</p><h1 id="learn-heading" tabindex="-1">Explore the fretboard</h1><p>Find a note. See a shape. Hear how they fit.</p></div></div><aside id="welcome" class="welcome-card"><span>New here? Take a one-minute tour, or start exploring.</span><div><button id="walkthroughStart">Show me around</button><button id="welcomeSkip" class="text-button">Skip</button></div></aside><nav class="practice-modes" aria-label="Choose a learning mode">
@@ -134,10 +134,11 @@
 </section>
 <section id="view-play" class="app-view" aria-labelledby="gameTitle" hidden>
   <div class="play-setup" id="playSetup">
-    <div class="play-title"><div><p class="section-kicker" id="gameLevel">Level 1 · Bass notes</p><h1 id="gameTitle" tabindex="-1">One steady bass</h1></div><button id="chooseExercise" class="text-button">Change exercise</button></div>
-    <details class="game-settings" id="gameSettings"><summary>Mode, tempo &amp; options <span id="setupSummary">Learn · 55 BPM</span></summary>
+    <div class="play-title"><div><p class="section-kicker" id="gameLevel">Level 1 · Bass notes</p><h1 id="gameTitle" tabindex="-1">One steady bass</h1></div><div class="play-actions"><button id="loopButton" class="text-button" aria-haspopup="dialog">↻ Loop measures</button><button id="chooseExercise" class="text-button">Exercises</button></div></div>
+    <details class="game-settings" id="gameSettings"><summary>Mode &amp; options <span id="setupSummary">Learn · 55 BPM</span></summary>
       <div class="option-grid"><label class="field"><span>How would you like to play?</span><select id="gameMode"><option value="learn">Learn · waits for your note</option><option value="rhythm">Rhythm · play in time</option></select></label>
       <label class="field"><span>Tempo · quarter-note BPM</span><input id="gameBpm" type="number" min="30" max="180" value="55" inputmode="numeric"></label>
+      <label class="check-label"><input id="gameCounts" type="checkbox" checked> Show rhythm counting</label>
       <label class="check-label"><input id="gameFingers" type="checkbox" checked> Show P I M A finger hints</label>
       <label class="check-label"><input id="gameClick" type="checkbox"> Metronome <small>Headphones help listening</small></label>
       <label class="check-label"><input id="gameRepeat" type="checkbox"> Repeat automatically <small>One-bar lead-in</small></label>
@@ -149,12 +150,12 @@
   </div>
   <p class="rotate-hint">↻ Turn your phone sideways for a wider playing view.</p>
   <div id="gameArena" class="game-arena">
-    <div class="arena-heading"><span id="gameChord">Open strings</span><span id="gameBeat">Ready when you are</span><span id="gameStats">0 played · streak 0</span></div>
+    <div class="arena-heading"><span id="gameChord">Open strings</span><span id="gameBeat">Ready when you are</span><span id="gameStats">0 verified · streak 0</span></div>
     <div class="tab-stage"><canvas id="tabCanvas" role="img" aria-label="Guitar tablature. High e at top, low E at bottom. Fret numbers approach the vertical playhead."></canvas></div>
     <div class="game-feedback"><span id="gameFeedback" role="status">Pluck the highlighted note to begin.</span><button id="acceptPinch" class="text-button" hidden>Continue unscored →</button><button class="context-help" data-help="tab" aria-label="How to read this tablature">?</button></div>
   </div>
   <div class="transport-controls"><button id="gameStart" class="primary-button">▶ Start</button><button id="gameRestart" class="secondary-button" aria-label="Restart this exercise">↺ Restart</button><button id="gameListen" class="secondary-button">♪ Listen</button><label class="inline-tempo"><span>BPM</span><button id="tempoDown" aria-label="Decrease tempo by five">−</button><output id="tempoReadout">55</output><button id="tempoUp" aria-label="Increase tempo by five">+</button></label></div>
-  <p class="game-tip" id="gameTip">Use your thumb. Let your hand stay relaxed.</p>
+  <p class="rhythm-note" id="rhythmNote">Round notes: bass · Square notes: treble · Stacked notes: play together.</p><p class="game-tip" id="gameTip">Use your thumb. Let your hand stay relaxed.</p>
   <section id="gameResults" class="results-card" aria-labelledby="resultsHeading" hidden><h2 id="resultsHeading">A little progress, every time.</h2><p id="resultText"></p><div><button id="repeatExercise" class="primary-button">↺ Play again</button><button id="nextExercise" class="secondary-button">Next exercise →</button></div></section>
   <details class="accessible-score"><summary>Text version of this exercise</summary><ol id="textScore"></ol></details>
 </section>
@@ -207,8 +208,13 @@
                 </div></details></section>
 
         </div></section>
+<dialog id="loopDialog" class="help-dialog" aria-labelledby="loopTitle"><div class="dialog-heading"><h2 id="loopTitle">A little at a time</h2><button id="loopClose" class="icon-button" aria-label="Close loop selection">×</button></div>
+<p>Choose a measure or a short phrase. It will repeat continuously so you can settle into the rhythm.</p>
+<div class="option-grid"><label class="field"><span>First measure</span><select id="loopFirst"></select></label><label class="field"><span>Last measure</span><select id="loopLast"></select></label></div>
+<p class="muted">Use the − / + BPM controls to slow down or build speed. A note already ringing at the start of your selection is plucked again on each pass.</p>
+<div class="loop-actions"><button id="loopApply" class="primary-button">Loop selection</button><button id="loopClear" class="secondary-button">Play whole exercise</button></div><button id="loopHelp" class="text-button">How looping works ↗</button></dialog>
 <dialog id="helpDialog" class="help-dialog" aria-labelledby="helpTitle"><div class="dialog-heading"><h2 id="helpTitle">A little help</h2><button id="helpClose" class="icon-button" aria-label="Close help">×</button></div><div id="helpContent"></div><div class="dialog-footer"><button id="tourAgain" class="text-button">Take the quick tour</button></div></dialog>
 <dialog id="calibrationDialog" class="help-dialog" aria-labelledby="calibrationTitle"><div class="dialog-heading"><h2 id="calibrationTitle">Make room for your guitar</h2><button id="calibrationClose" class="icon-button" aria-label="Close microphone calibration">×</button></div><p id="calibrationMessage" role="status">First, stay quiet for two seconds so we can hear the room. Then pluck one open string with each click.</p><progress id="calibrationProgress" max="10" value="0" aria-label="Calibration progress"></progress><p class="muted">Use headphones. The timing step measures your device and your playing together; adjust the offset later if it feels early or late.</p><button id="calibrationStart" class="primary-button">Start room check</button></dialog>
 </main>
-    <script src="js/music.js?v=1.0"></script><script src="js/exercises.js?v=1.0"></script><script src="js/audio.js?v=1.0"></script><script src="script.js?v=1.0"></script><script src="tuner.js?v=1.0"></script><script src="js/game.js?v=1.1"></script><script src="js/app.js?v=1.1"></script></body>
+    <script src="js/music.js?v=1.3"></script><script src="js/rhythm.js?v=1.3"></script><script src="js/exercises.js?v=1.3"></script><script src="js/audio.js?v=1.2"></script><script src="script.js?v=1.0"></script><script src="tuner.js?v=1.0"></script><script src="js/game.js?v=1.3"></script><script src="js/app.js?v=1.3"></script></body>
 </html>

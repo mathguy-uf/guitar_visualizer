@@ -1521,3 +1521,82 @@ progress {
     display: block;
     margin: 3px 0 0
 }
+/* Rhythm practice keeps setup out of the playing area. */
+.play-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.play-actions .text-button {
+    font-size: .82rem;
+    padding: 6px 10px;
+}
+#loopButton[aria-label^="Change loop"] {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+}
+.rhythm-note {
+    font-size: .75rem;
+    color: var(--muted);
+    margin: 12px 2px 0;
+}
+.loop-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 20px 0 8px;
+}
+@media (max-width: 650px) {
+    .play-title { align-items: flex-start; flex-wrap: wrap; }
+    .play-actions { margin-left: auto; }
+    .play-actions .text-button { font-size: .74rem; padding: 4px 8px; }
+    .loop-actions > button { flex: 1; }
+    .rhythm-note { font-size: .7rem; }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+    body[data-section=play] .play-title {
+        flex-wrap: nowrap;
+        align-items: center;
+        min-width: 0;
+        gap: 8px;
+    }
+    body[data-section=play] .play-title > div:first-child { min-width: 0; }
+    body[data-section=play] .play-title h1 {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: .9rem;
+    }
+    body[data-section=play] .play-actions { margin-left: auto; gap: 0; }
+    body[data-section=play] .play-actions .text-button { font-size: .68rem; padding: 0 7px; }
+    body[data-section=play] .game-settings > summary { font-size: .7rem; gap: 6px; }
+    body[data-section=play] .rhythm-note { display: none; }
+    body[data-section=play] .play-setup { gap: 8px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+    #loopDialog {
+        padding: 14px 20px;
+    }
+    #loopDialog .dialog-heading {
+        margin-bottom: 8px;
+    }
+    #loopDialog h2 {
+        font-size: 1.05rem;
+    }
+    #loopDialog > p {
+        font-size: .8rem;
+        line-height: 1.4;
+        margin: 8px 0 12px;
+    }
+    #loopDialog > p.muted {
+        display: none;
+    }
+    #loopDialog .loop-actions {
+        margin: 12px 0 0;
+    }
+    #loopDialog button, #loopDialog select {
+        min-height: 40px;
+    }
+}

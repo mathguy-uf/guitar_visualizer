@@ -148,3 +148,101 @@ test('uncertain pinches never become wrong pitches and are excluded from accurac
     }, 60);
     assert.equal(learn.next().tick, 0);
 });
+
+test('an uncertain pinch remains open for a clearer reading in the same timing window', () => {
+    const s = new M.Session(M.compile(E.data.find(e => e.id === 'three-pinch')), 'rhythm', .22);
+    const e = s.next();
+    assert.equal(s.input({
+        tick: 0,
+        pitches: [e.targets[0]],
+        confidence: .35
+    }, 60).kind, 'uncertain');
+    assert.equal(s.next().id, e.id);
+    assert.equal(s.input({
+        tick: 60,
+        pitches: e.targets,
+        confidence: .8
+    }, 60).kind, 'correct');
+    assert.equal(s.summary().hits, 1);
+    assert.equal(s.summary().uncertain, 0);
+});
+
+test('overlapping timing windows match a correct pitch before the nearest different note', () => {
+    const events = M.compile({
+        length: 960,
+        events: [{
+            tick: 0,
+            duration: 240,
+            notes: [{
+                string: 6,
+                fret: 0
+            }]
+        }, {
+            tick: 240,
+            duration: 240,
+            notes: [{
+                string: 3,
+                fret: 0
+            }]
+        }]
+    });
+    const s = new M.Session(events, 'rhythm', .22);
+    const result = s.input({
+        tick: 140,
+        pitches: [40],
+        confidence: 1
+    }, 120);
+    assert.equal(result.kind, 'late');
+    assert.equal(result.event.id, events[0].id);
+    assert.equal(s.summary().wrong, 0);
+});
+
+test('a low-confidence reading remains uncertain instead of becoming a miss or an extra', () => {
+    const s = new M.Session(M.compile(E.data[0]), 'rhythm', .22);
+    s.input({
+        tick: 0,
+        pitches: [],
+        confidence: .1
+    }, 60);
+    s.expire(300, 60);
+    assert.equal(s.summary().uncertain, 1);
+    assert.equal(s.summary().missed, 0);
+    s.input({
+        tick: 480,
+        pitches: [],
+        confidence: .1
+    }, 60);
+    assert.equal(s.summary().extras, 0);
+});
+
+test('historical onset positions remain correct after a live tempo change', () => {
+    let now = 10;
+    const clock = new M.Transport(() => now, 60);
+    clock.start(0);
+    now = 11;
+    clock.setTempo(120);
+    assert.ok(Math.abs(clock.position(10.9) - 864) < 1e-6);
+    assert.ok(Math.abs(clock.position(11.1) - 1152) < 1e-6);
+});
+
+test('tempo changes cannot stretch a fixed timing window around an earlier note', () => {
+    let now = 10;
+    const clock = new M.Transport(() => now, 60);
+    clock.start(0);
+    const event = {
+        id: 0,
+        tick: 960,
+        targets: [40]
+    };
+    const s = new M.Session([event], 'rhythm', .22);
+    now = 11.2;
+    clock.setTempo(180);
+    const result = s.input({
+        tick: clock.position(11.25),
+        time: 11.25,
+        timeAt: tick => clock.timeAt(tick),
+        pitches: [40],
+        confidence: 1
+    }, 180);
+    assert.equal(result.kind, 'extra');
+});

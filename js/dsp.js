@@ -84,6 +84,16 @@
             energy: [],
             mono: null
         };
+        // Use a short causal envelope for attacks. The full pitch window keeps
+        // filling after a pluck and must not look like a second pluck.
+        let tailSum = 0,
+            tailEnergy = 0;
+        const tailLength = Math.min(1024, input.length);
+        for (let i = input.length - tailLength; i < input.length; i++) {
+            tailSum += input[i];
+            tailEnergy += input[i] * input[i];
+        }
+        const attackRms = Math.sqrt(Math.max(0, tailEnergy / tailLength - (tailSum / tailLength) ** 2));
         const mono = yin(x, p.rate);
         const candidates = [...new Set([...expected, ...Array.from({
             length: 37
@@ -96,6 +106,7 @@
         const strength = m => energy.find(e => e.midi === m)?.amplitude || 0;
         if (expected.length <= 1) return {
             rms,
+            attackRms,
             pitches: mono ? [mono.midi] : [],
             confidence: mono?.confidence || 0,
             energy,
@@ -107,7 +118,10 @@
             found = [];
         for (const m of expected) {
             const a = strength(m);
-            const lower = expected.filter(k => k < m && Math.abs(hz(m) / hz(k) - Math.round(hz(m) / hz(k))) < .035 && strength(k) > max * .15);
+            const lower = energy.filter(e => e.midi < m &&
+                Math.abs(hz(m) / hz(e.midi) - Math.round(hz(m) / hz(e.midi))) < .035 &&
+                e.amplitude > max * .15 &&
+                e.amplitude >= strength(e.midi - 1) && e.amplitude >= strength(e.midi + 1));
             // Octave pinches cannot be separated reliably from natural guitar
             // harmonics here. Keep them uncertain rather than guessing.
             if (lower.length) continue;
@@ -115,10 +129,13 @@
         }
         return {
             rms,
+            attackRms,
             pitches: found,
             confidence: found.length === expected.length ? .8 : .35,
             energy,
-            mono
+            mono,
+            expected,
+            floor
         };
     }
     class AttackGate {
@@ -128,10 +145,10 @@
         reset() {
             this.lastEnergy = [];
             this.previous = 0;
+            this.envelopeValley = 0;
             this.lastAttack = -Infinity;
             this.pending = null;
-            this.lastMono = null;
-            this.low = 0;
+            this.lastExpected = null;
         }
         process(result, time) {
             const prior = new Map(this.lastEnergy.map(e => [e.midi, e.amplitude]));
@@ -144,22 +161,34 @@
                 novelty += delta;
                 total += e.amplitude;
             }
-            const changed = result.mono && this.lastMono !== null && Math.abs(result.mono.midi - this.lastMono) > .65;
-            const rise = result.rms > this.previous * 1.20 && result.rms > .005;
-            const flux = novelty / Math.max(total, .0001) > .24;
-            if (result.rms < .003) this.low++;
-            const onset = (rise || flux || changed || this.low >= 2) && result.rms > .004 && time - this.lastAttack > .075;
+            const envelope = result.attackRms ?? result.rms;
+            if (envelope < this.previous) this.envelopeValley = envelope;
+            const rise = envelope > this.envelopeValley * 1.20 && envelope > .005;
+            const signature = result.expected?.join(',') || '';
+            const targetChanged = this.lastExpected !== null && signature !== this.lastExpected;
+            const largestDelta = Math.max(...deltas.values(), .00001);
+            const freshTarget = result.expected?.some(midi => {
+                const delta = deltas.get(midi) || 0;
+                const harmonicRise = result.energy.some(e => e.midi < midi &&
+                    Math.abs(hz(midi) / hz(e.midi) - Math.round(hz(midi) / hz(e.midi))) < .035 &&
+                    (deltas.get(e.midi) || 0) > delta * .9);
+                return delta > Math.max((result.floor || .004) * .75, largestDelta * .25) && !harmonicRise;
+            });
+            const onset = (rise || (targetChanged && freshTarget && novelty / Math.max(total, .0001) > .10)) &&
+                envelope > .004 && time - this.lastAttack > .04;
             if (onset && !this.pending) {
                 this.pending = {
                     time,
-                    tries: 0
+                    tries: 0,
+                    baseline: prior,
+                    pinchAttacks: new Set()
                 };
                 this.lastAttack = time;
-                this.low = 0;
+                this.lastExpected = signature;
+                this.envelopeValley = envelope;
             }
-            this.previous = result.rms;
+            this.previous = envelope;
             this.lastEnergy = result.energy;
-            if (result.mono) this.lastMono = result.mono.midi;
             if (this.pending) {
                 this.pending.tries++;
                 // During rolls, ringing bass can dominate a monophonic estimate.
@@ -182,8 +211,26 @@
                         };
                     }
                 }
-                // Wait briefly for the pitch to settle after the pick transient.
-                if (result.pitches.length && result.confidence >= .6) {
+                // A pinch needs fresh energy at every constituent pitch.
+                // An old ringing bass plus a new treble attack is not a pinch.
+                const pinch = result.expected?.length > 1;
+                if (pinch) {
+                    for (const midi of result.pitches) {
+                        const before = this.pending.baseline.get(midi) || 0;
+                        const amplitude = result.energy.find(e => e.midi === midi)?.amplitude || 0;
+                        if (amplitude - before > Math.max((result.floor || .004) * .75, before * .12)) {
+                            this.pending.pinchAttacks.add(midi);
+                        }
+                    }
+                    const fresh = result.pitches.filter(midi => this.pending.pinchAttacks.has(midi));
+                    if (fresh.length < result.expected.length) result = {
+                        ...result,
+                        pitches: fresh,
+                        confidence: .35
+                    };
+                }
+                // Allow settling across several windows before calling a pinch uncertain.
+                if (result.pitches.length && result.confidence >= (pinch ? .72 : .6)) {
                     const event = {
                         ...result,
                         time: this.pending.time
