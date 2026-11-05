@@ -103,7 +103,7 @@
         notes: [n(i % 2 ? 4 : 6), n(3)],
         accent: i % 4 === 0
     }))));
-    data.push(exercise('three-pinch', 4, 'Three strings together', 'Thumb, middle, and ring on open D, B, e.', 'Keep the three attacks together. Use a quiet room.', 50, Array.from({
+    data.push(exercise('three-pinch', 4, 'Three strings together', 'Thumb, middle, and ring on open D, B, e. An open-string coordination drill.', 'Keep the three attacks together. Use a quiet room.', 50, Array.from({
         length: 4
     }, (_, i) => ({
         tick: i * 2 * Q,
@@ -112,7 +112,10 @@
     }))));
     const pinchRoll = singles([6, 3, 2, 1, 4, 3, 2, 1], E);
     pinchRoll.forEach((e, i) => {
-        if (i % 4 === 0) e.notes.push(n(i % 8 === 0 ? 3 : 1));
+        if (i % 4 === 0) {
+            delete e.voice; // Mixed bass/treble group: compile each note by its string.
+            e.notes.push(n(i % 8 === 0 ? 3 : 1));
+        }
     });
     data.push(exercise('pinch-roll', 4, 'Pinch into a roll', 'A bass-and-treble pinch starts each half bar.', 'Release into the roll without rushing the next note.', 55, pinchRoll));
     const sync = [];
@@ -206,7 +209,7 @@
         [0, 1, 2, 3].forEach((beat) => blues.push({
             tick: (b * 4 + beat) * Q,
             duration: Q,
-            notes: [n(beat % 2 ? 5 : 6)],
+            notes: [n(beat % 2 ? 5 : 6, beat % 2 ? 2 : 0)],
             voice: 'bass',
             accent: beat === 0
         }));
@@ -218,7 +221,7 @@
         }));
     }
     data.push({
-        ...exercise('blues', 5, 'Front porch blues', 'A steady thumb with answering treble notes.', 'Try a little swing in Mode & options. Keep the bass unhurried.', 55, blues),
+        ...exercise('blues', 5, 'Front porch blues', 'E–B alternating bass with offbeat treble. A one-chord blues foundation.', 'Thumb: low E open, then A string fret 2. Keep the bass steady under the swung treble.', 55, blues, 8 * Q, [4, 4], [{tick: 0, chord: 'E5'}]),
         swing: .6
     });
     // Short answering phrases develop independence before adding denser rhythm.

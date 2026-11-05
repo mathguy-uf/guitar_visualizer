@@ -158,11 +158,11 @@
     }, {
         id: 'fingers',
         title: 'Fingerpicking Basics',
-        body: `<div class="finger-guide"><div><b>P</b>Thumb</div><div><b>I</b>Index</div><div><b>M</b>Middle</div><div><b>A</b>Ring</div></div><p>Rest your thumb near the bass strings. I usually plays G, M plays B, and A plays high e. These are helpful suggestions; keep your hand relaxed.</p><p>The microphone hears pitches. It cannot know which physical string or finger made a pitch. Use the tablature as your fingering guide.</p>`
+        body: `<div class="finger-guide"><div><b>P</b>Thumb</div><div><b>I</b>Index</div><div><b>M</b>Middle</div><div><b>A</b>Ring</div></div><p>In these exercises: <b>P</b> (thumb) plays strings <b>6, 5, 4 — low E, A, D</b>. <b>I</b> (index/pointer) plays <b>3 — G</b>; <b>M</b> (middle) plays <b>2 — B</b>; <b>A</b> (ring) plays <b>1 — high e</b>. These are starting assignments, not a rule for every piece.</p><p>Your pinky may rest lightly on the guitar as an anchor if that suits your hand. It has no picking assignment here. Keep the picking fingers free to move; a floating hand is also an option.</p><p>The microphone hears pitches. It cannot know which physical string or finger made a pitch. Use the tablature as your fingering guide.</p>`
     }, {
         id: 'rolls',
         title: 'Roll Patterns',
-        body: `<p><b>Forward:</b> P → I → M → A. Travel from bass toward the thin strings.</p><p><b>Backward:</b> P → A → M → I. Return through the thin strings.</p><p><b>Combined:</b> P I M A · P A M I.</p><p>Give every note the same amount of time. Start slowly enough that your hand can stay loose. The exercises use a bass note at the start of each half bar.</p>`
+        body: `<p><b>Forward:</b> P → I → M → A. Travel from bass toward the thin strings.</p><p><b>Backward:</b> P → A → M → I. Return through the thin strings.</p><p><b>Combined:</b> P I M A · P A M I.</p><p>These are four-finger guitar arpeggios: forward and backward describe the treble-string order. They are not strict three-finger banjo roll patterns. In these roll exercises, the thumb starts each half bar; I, M and A keep their own strings. Start slowly with even eighth notes.</p>`
     }, {
         id: 'bass',
         title: 'Bass Patterns & Chord Changes',
@@ -170,7 +170,7 @@
     }, {
         id: 'pinches',
         title: 'Playing Pinches',
-        body: `<p><b>P + M</b> means thumb and middle finger together. A vertical connector between fret numbers shows one simultaneous pluck, not a fast roll.</p><p>Start with two strings and a loose hand. Pinch listening is experimental: harmonics can hide a correctly played note. An uncertain reading is unscored; in Learn, use <b>Continue unscored</b> when needed.</p>`
+        body: `<p><b>P + M</b> means thumb and middle finger together. A vertical connector between fret numbers shows one simultaneous pluck, not a fast roll. The open D–B–e three-string drill practices coordination; its notes are not a complete major or minor triad.</p><p>Start with two strings and a loose hand. Pinch listening is experimental: harmonics can hide a correctly played note. An uncertain reading is unscored; in Learn, use <b>Continue unscored</b> when needed.</p>`
     }, {
         id: 'rhythm',
         title: 'Understanding Rhythm',
