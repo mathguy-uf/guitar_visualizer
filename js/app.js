@@ -42,6 +42,7 @@
             stopMetronome();
         }
         current = section;
+        $('resumePractice').textContent = 'Return to ' + GuitarGame.exercise.title;
         document.body.dataset.section = section;
         document.querySelectorAll('.app-view').forEach(v => {
             v.hidden = v.id !== 'view-' + section;
@@ -78,14 +79,19 @@
 
     function library() {
         $('exerciseLibrary').replaceChildren();
+        const query = $('exerciseSearch').value.trim().toLowerCase();
+        let found = 0;
         GuitarExercises.levels.forEach((level, index) => {
+            const exercises = GuitarExercises.data.filter(e => e.level === index + 1 && (!query || [e.title, e.description, e.tip, level.title].join(' ').toLowerCase().includes(query)));
+            if (!exercises.length) return;
+            found += exercises.length;
             const details = document.createElement('details');
             details.className = 'lesson-level';
-            details.open = index === 0;
+            details.open = !!query || index === 0;
             const summary = document.createElement('summary');
             summary.innerHTML = `<span class="level-number">${index+1}</span><span><strong class="level-name">${level.title}</strong><span class="level-detail">${level.detail}</span></span><span class="level-expand" aria-hidden="true">＋</span>`;
             details.append(summary);
-            GuitarExercises.data.filter(e => e.level === index + 1).forEach(e => {
+            exercises.forEach(e => {
                 const row = document.createElement('article');
                 row.className = 'exercise-row';
                 const text = document.createElement('div'),
@@ -128,12 +134,23 @@
             });
             $('exerciseLibrary').append(details);
         });
+        $('exerciseSearchStatus').hidden = !query;
+        $('exerciseSearchStatus').textContent = found ? `${found} exercise${found===1?'':'s'} found` : 'No matches. Try bass, roll, pinch, or blues.';
     }
+    $('exerciseSearch').addEventListener('input', library);
+    $('exerciseSearch').addEventListener('search', library);
+    $('resumePractice').addEventListener('click', () => navigate('play'));
+    document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
+        if (b.dataset.go === 'tune') {
+            selectTool('tuner');
+            navigate('tools');
+        } else navigate(b.dataset.go);
+    }));
     const tabDiagram = `<svg viewBox="0 0 460 160" role="img" aria-label="Six TAB lines: high e, B, G, D, A, low E. Zero on low E means play it open; three on B means fret three. A vertical line marks now."><g fill="none" stroke="#83947b">${[28,48,68,88,108,128].map(y=>`<path d="M55 ${y}H440"/>`).join('')}<path d="M180 12V144" stroke="#e6edd8" stroke-width="3"/></g><g fill="#e6edd8" font-family="system-ui" font-size="14">${['e','B','G','D','A','E'].map((n,i)=>`<text x="20" y="${33+i*20}">${n}</text>`).join('')}<rect x="167" y="117" width="26" height="22" rx="4" fill="#c7dbb5"/><text x="175" y="133" fill="#17231b">0</text><rect x="287" y="37" width="26" height="22" rx="4" fill="#263c2a"/><text x="295" y="53">3</text><text x="155" y="157" font-size="11">play now</text><text x="280" y="82" font-size="11">coming up</text></g></svg>`;
     const topics = [{
         id: 'start',
         title: 'Quick Start',
-        body: `<p><b>Learn</b> lets you explore shapes and tap notes to hear them. <b>Practice</b> helps you choose a short exercise.</p><p>For your first game: tune your guitar, choose <b>One steady bass</b>, turn your phone sideways, and tap <b>Start</b>. Allow microphone access when asked. Learn mode waits while you find each note.</p><p>Try <b>Listen</b> before you play. No microphone is needed. Change to Rhythm mode when the pattern feels comfortable.</p>`
+        body: `<p><b>Learn</b> lets you explore shapes and tap notes to hear them. <b>Practice</b> helps you choose a short exercise.</p><p>For your first game: tap <b>Practice → Tune first</b>, then <b>Choose an exercise</b>. Pick <b>One steady bass</b> or search for <b>forward</b>, turn your phone sideways, and tap <b>Start</b>. Allow microphone access when asked. Learn mode waits while you find each note.</p><p>Try <b>Listen</b> before you play. No microphone is needed. Change to Rhythm mode when the pattern feels comfortable.</p>`
     }, {
         id: 'tab',
         title: 'Reading Tablature',
@@ -146,6 +163,14 @@
         id: 'rolls',
         title: 'Roll Patterns',
         body: `<p><b>Forward:</b> P → I → M → A. Travel from bass toward the thin strings.</p><p><b>Backward:</b> P → A → M → I. Return through the thin strings.</p><p><b>Combined:</b> P I M A · P A M I.</p><p>Give every note the same amount of time. Start slowly enough that your hand can stay loose. The exercises use a bass note at the start of each half bar.</p>`
+    }, {
+        id: 'bass',
+        title: 'Bass Patterns & Chord Changes',
+        body: `<div class="count-guide" aria-label="Bass plays on beats one and three"><span class="accent">1 bass</span><span>2</span><span class="accent">3 bass</span><span>4</span></div><p>Let P, your thumb, keep the pulse. An alternating bass moves between two low strings; the TAB tells you which ones.</p><p>Watch the current chord and “next” cue above the TAB. Prepare the next shape while keeping your thumb relaxed. Try the G–C–D roll slowly, or loop the two measures around a difficult change.</p>`
+    }, {
+        id: 'pinches',
+        title: 'Playing Pinches',
+        body: `<p><b>P + M</b> means thumb and middle finger together. A vertical connector between fret numbers shows one simultaneous pluck, not a fast roll.</p><p>Start with two strings and a loose hand. Pinch listening is experimental: harmonics can hide a correctly played note. An uncertain reading is unscored; in Learn, use <b>Continue unscored</b> when needed.</p>`
     }, {
         id: 'rhythm',
         title: 'Understanding Rhythm',

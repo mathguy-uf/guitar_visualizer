@@ -1600,3 +1600,41 @@ progress {
         min-height: 40px;
     }
 }
+
+/* Everyday practice: a short route to tuning, a pattern, and an exact tempo. */
+.practice-shortcuts { display:flex; gap:10px; flex-wrap:wrap; margin:18px 0; }
+.exercise-search { margin:20px 0 12px; }
+.exercise-search input { width:100%; min-height:48px; font-size:1rem; }
+.tools-return { margin:0 0 16px; }
+.game-exit, .game-help { display:none; }
+.inline-tempo input { width:64px; min-height:44px; text-align:center; font-size:1rem; padding:4px; }
+@media (orientation:landscape) and (max-height:600px) {
+    body[data-section=play] .primary-nav { display:none; }
+    body[data-section=play] .app-shell {
+        height:100vh;
+        height:100dvh;
+        padding-top:max(4px, env(safe-area-inset-top));
+    }
+    body[data-section=play] .arena-heading { height:48px; gap:10px; padding:2px 6px; }
+    body[data-section=play] .game-exit, body[data-section=play] .game-help {
+        display:block; min-height:44px; padding:4px 10px; font-size:.8rem;
+        flex-shrink:0; background:transparent;
+    }
+    body[data-section=play] #gameChord { flex:1; font-size:.8rem; }
+    body[data-section=play] #gameStats { display:none; }
+    body[data-section=play] .game-feedback .context-help { display:none; }
+    body[data-section=play] .transport-controls>button { min-height:48px; font-size:.9rem; }
+    body[data-section=play] .transport-controls>.primary-button { min-width:130px; }
+    body[data-section=play] .inline-tempo button { min-height:48px; height:48px; width:46px; }
+    body[data-section=play] .inline-tempo input { min-height:48px; }
+    body[data-section=play] .game-settings[open] { inset-block-start:4px; }
+}
+@media (orientation:landscape) and (max-width:700px) {
+    body[data-section=play] .transport-controls { gap:6px; }
+    body[data-section=play] .transport-controls>button { padding:6px 10px; }
+    body[data-section=play] .inline-tempo { gap:4px; }
+}
+@media(max-width:650px) {
+    input, select, textarea { font-size:16px; }
+    .practice-shortcuts>button { flex:1; }
+}
