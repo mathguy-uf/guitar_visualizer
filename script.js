@@ -128,6 +128,7 @@ const metronomeStart = document.getElementById("metronomeStart");
 const metronomeCount = document.getElementById("metronomeCount");
 const metronomeStatus = document.getElementById("metronomeStatus");
 const metronomeDescription = document.getElementById("metronomeDescription");
+const metronomeRestore = document.getElementById("metronomeRestore");
 let metronomeRunning = false;
 let metronomeGeneration = 0;
 let metronomeTimer = null;
@@ -145,6 +146,21 @@ function metronomeTempo() {
     return Number.isFinite(n) && n >= 40 && n <= 240 ? n : 100;
 }
 
+function updateMetronomeStatus() {
+    const muted = !metronomePattern.some(Boolean);
+    metronomeRestore.hidden = !muted;
+    metronomeStatus.textContent = muted
+        ? "All counts are muted. Choose counts below or restore numbered beats."
+        : metronomeRunning ? "Playing. Use Stop to silence the metronome." : "Stopped.";
+}
+
+function playbackContext() {
+    if (window.GuitarAudio) return GuitarAudio.ensureContext();
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!audioContext || audioContext.state === "closed") audioContext = new Audio();
+    return audioContext;
+}
+
 function syncMetronomeSelection() {
     [...metronomeCount.querySelectorAll("button")].forEach((button, index) => {
         button.setAttribute("aria-pressed", String(metronomePattern[index]));
@@ -156,6 +172,7 @@ function syncMetronomeSelection() {
     };
     updateGroup(metronomeBeats, metronomePattern.filter((_, i) => i % metronomeDivisions() === 0));
     updateGroup(metronomeOffbeats, metronomePattern.filter((_, i) => i % metronomeDivisions() !== 0));
+    updateMetronomeStatus();
 }
 
 function updateMetronomeDisplay() {
@@ -208,6 +225,11 @@ function metronomeClick(time, accented, offbeat) {
 
 function scheduleMetronome() {
     if (!metronomeRunning) return;
+    if (audioContext.state !== "running") {
+        stopMetronome();
+        metronomeStatus.textContent = "Audio was interrupted. Tap Start to hear the metronome again.";
+        return;
+    }
     const now = audioContext.currentTime;
     // Recover from browser throttling without playing a backlog of old clicks.
     if (metronomeNextTime < now - 0.1) metronomeNextTime = now + 0.02;
@@ -242,7 +264,7 @@ function stopMetronome() {
     if (metronomeGate) { metronomeGate.disconnect(); metronomeGate = null; }
     metronomeStart.textContent = "▶ Start";
     metronomeStart.setAttribute("aria-pressed", "false");
-    metronomeStatus.textContent = "Stopped.";
+    updateMetronomeStatus();
     [...metronomeCount.querySelectorAll("button")].forEach(item => item.classList.remove("current"));
 }
 
@@ -257,14 +279,15 @@ async function startMetronome() {
     metronomeStart.setAttribute("aria-pressed", "true");
     metronomeStatus.textContent = "Starting…";
     try {
-        audioContext ||= new Audio();
+        audioContext = playbackContext();
         await audioContext.resume();
         if (!metronomeRunning || generation !== metronomeGeneration) return;
+        if (audioContext.state !== "running") throw Error("Audio is still suspended");
         metronomeGate = audioContext.createGain();
         metronomeGate.connect(audioContext.destination);
         metronomeStep = 0;
         metronomeNextTime = audioContext.currentTime + 0.04;
-        metronomeStatus.textContent = "Playing. Use Stop to silence the metronome.";
+        updateMetronomeStatus();
         scheduleMetronome();
         metronomeTimer = setInterval(scheduleMetronome, 25);
     } catch (error) {
@@ -275,6 +298,11 @@ async function startMetronome() {
     }
 }
 
+metronomeRestore.addEventListener("click", () => {
+    metronomePattern.forEach((_, index) => { metronomePattern[index] = index % metronomeDivisions() === 0; });
+    syncMetronomeSelection();
+    window.dispatchEvent(new Event("guitar:settings"));
+});
 metronomeStart.addEventListener("click", () => metronomeRunning ? stopMetronome() : startMetronome());
 function changeMetronomePattern() {
     const wasRunning = metronomeRunning;
@@ -304,7 +332,7 @@ updateMetronomeDisplay();
 function playNotes(midis) {
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) { soloPrompt.textContent = "Audio is not supported by this browser."; return; }
-    audioContext ||= new Audio();
+    audioContext = playbackContext();
     audioContext.resume();
     const start = audioContext.currentTime;
     midis.forEach((midi, index) => {
