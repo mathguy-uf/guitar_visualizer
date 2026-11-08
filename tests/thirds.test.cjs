@@ -112,3 +112,49 @@ test('pinch and roll events use only selected notes, unique fingers, and one bar
         }
     }
 });
+
+test('independent chord arithmetic validates every reachable open-string combination and removal',()=>{
+    const standard=[64,59,55,50,45,40], spelling=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+    const roots=[[4],[6,6],[4],[9,9],[11,11],[1,1],[11,3,11],[4]];
+    const formulas={
+        '0,4,7':['','major','1–3–5'], '0,3,7':['m','minor','1–♭3–5'],
+        '0,3,6':['dim','diminished','1–♭3–♭5'], '0,4,7,10':['7','dominant','1–3–5–♭7'],
+        '0,3,7,10':['m7','minor','1–♭3–5–♭7'], '0,3,10':['m7','minor','1–♭3–♭7'],
+        '0,2,4,7':['add9','major','1–3–5–9']
+    };
+    let checked=0;
+    for(let index=0;index<8;index++)for(let variant=0;variant<roots[index].length;variant++)for(const full of [false,true]){
+        const seen=new Set(),root=roots[index][variant];
+        function check(s){
+            const key=s.open.slice().sort().join();if(seen.has(key))return;seen.add(key);checked++;
+            const notes=T.lessonNotes(s),v=T.lessonView(s);
+            for(const n of notes){assert.equal(n.midi,standard[n.string-1]+n.fret);assert.equal(n.name,spelling[n.midi%12]);}
+            assert.equal(new Set(notes.map(n=>n.string)).size,notes.length);
+            const intervals=[...new Set(notes.map(n=>(n.midi-root)%12))].sort((a,b)=>a-b);
+            const [suffix,quality,formula]=formulas[intervals.join()]||[];
+            assert.notEqual(suffix,undefined,'independently known pitch set');
+            const bass=Math.min(...notes.map(n=>n.midi))%12;
+            assert.equal(v.chord.name,spelling[root]+suffix+(bass===root?'':'/'+spelling[bass])+(intervals.join()==='0,3,10'?' (no fifth)':''));
+            assert.equal(v.chord.quality,quality);assert.equal(v.chord.formula,formula);
+            for(const choice of T.openChoices(s)){
+                if(!choice.allowed)continue;
+                const next=T.addOpen(s,choice.string);
+                if(!choice.active){assert.ok(!notes.some(n=>n.string===choice.string));assert.ok([4,9,11].includes(choice.midi%12));}
+                check(next);
+            }
+            for(const mode of ['build','roll'])for(const e of T.lessonEvents(s,mode))for(const n of e.notes){
+                assert.ok(n.duration>0);assert.ok(e.tick+n.duration<=3840);
+                const next=T.lessonEvents(s,mode).find(x=>x.tick>e.tick&&x.notes.some(p=>p.string===n.string));
+                assert.equal(e.tick+n.duration,next?.tick??3840,'one sustained voice per physical string');
+            }
+        }
+        check({...T.lessonState(index,variant),built:true,full});
+    }
+    assert.equal(checked,90);
+});
+
+test('added ninth formulas keep the triad together before the extension',()=>{
+    const s=T.addOpen({...T.lessonState(3),built:true},2),v=T.lessonView(s);
+    assert.equal(v.chord.name,'Aadd9');assert.equal(v.chord.formula,'1–3–5–9');
+    assert.match(T.explanation(s),/no seventh is present/);
+});

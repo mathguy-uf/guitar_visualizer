@@ -18,7 +18,7 @@ The first exercise asks the learner to find E–G♯. The next three ask for mis
 - D-string scale notes are blue, G-string harmonies cream, added notes gold. Green/purple outlines describe **interval quality**. Chord names/buttons independently use green major, purple minor, orange dominant seventh, gray diminished. Selected pairs brighten; other pairs remain context, not instructions to strum every displayed note.
 - The complete dashed oval and either note are selectable with pointer, Enter or Space. SVG buttons have note/fret accessible names, visible focus, and larger invisible hit areas. Respect reduced-motion preferences for the added-note pulse.
 - The open row shows the sounding pitch (or chord role), X for skipped strings, and blank for fretted strings. A dotted gold question mark previews the open note needed to complete the chord.
-- Standard six-line TAB has high e at top, low E at bottom, 0 for open strings, and eight evenly spaced counts in 4/4. Aligned numbers connected vertically mean a simultaneous pinch. Separate columns are successive attacks; a dash in the picking row means no fresh pluck. Notes sustain within the bar.
+- Standard six-line TAB has high e at top, low E at bottom, 0 for open strings, and eight evenly spaced counts in 4/4. Aligned numbers connected vertically mean a simultaneous pinch. Separate columns are successive attacks; a dash in the picking row means no fresh pluck. Notes sustain until that same string is plucked again or the bar ends. Chord formulas keep the triad together before an added ninth: 1–3–5–9.
 - Picking letters use P thumb on E/A/D, I on G, M on B, A on high e. Pinky anchoring is optional. These are introductory arpeggios, not a claim to teach a strict banjo roll or Travis pattern.
 
 ## Independently verified pitches
@@ -53,8 +53,27 @@ The last three-note voicing is E/B because open B3 is below E4. Adding low E res
 - [Fender: How to Read a Chord Chart](https://www.fender.com/articles/chords/how-to-read-a-chord-chart): orientation, nut, fretting-hand numbers and O/X conventions.
 - [Fender: What is PIMA?](https://www.fender.com/articles/techniques/what-is-pima): picking-hand letters and optional pinky anchoring.
 - [Yamaha / Robbie Calvo: How To Play Guitar Double-Stops](https://hub.yamaha.com/guitars/g-how-to/how-to-play-guitar-double-stops/): two-note fragments, major-scale thirds, chord relationships, G–B tuning exception.
+- [Yamaha / Robbie Calvo: Constructing Basic Guitar Chords, Part 1](https://hub.yamaha.com/guitars/g-how-to/constructing-chords-part-1/): major, minor, diminished and augmented triads, chord tones and root position.
+- [Yamaha / Robbie Calvo: Constructing Basic Guitar Chords, Part 2](https://hub.yamaha.com/guitars/g-how-to/constructing-chords-part-2/): added tones, suspended fourths, extensions and harmonic context.
 - [Acoustic Guitar / Mac Randall: The Care and Feeding of the Picking Hand](https://acousticguitar.com/the-care-and-feeding-of-the-picking-hand/): common thumb E/A/D, index G, middle B, ring e allocation.
 - [JustinGuitar: Folk Fingerstyle](https://www.justinguitar.com/modules/folk-fingerstyle): begin with a simple pattern, then connect chord/scale relationships and expand.
+
+## Independent audit and polish — 2026-11-08
+
+The supplied eight pairs, default triads, omitted-fifth seventh chords and slash names were correct when recomputed from standard-tuning MIDI. The audit found and fixed presentation and interaction problems:
+
+- The upper E–G♯ recipe menu said E although its minimal open-B completion is E/B. The menu now computes the actual completion name. The recipe reference table also distinguishes that high pair and specifies **high open E** for A/Aadd9; low E would give A/E or Aadd9/E.
+- Added-ninth formulas previously sorted pitch classes as 1–9–3–5. They now use the teaching order 1–3–5–9. Open-string advice names fourth/11th tension and chromatic occupied D/G strings explicitly. The role legend includes 4 and 9.
+- The Esus4 preview previously drew E major immediately. Diagram, explanation, roles and TAB now show Esus4 first and move to E with the scheduled sounding change. Changing selection or stopping cancels the pending visual change.
+- Repeated TAB plucks previously overlapped synthesized voices from the same physical string. Each string now rings to its next pluck or the bar line, with independent durations for the two notes of a pinch. Accessible TAB descriptions say “1 &”, “2 &”, etc., instead of an ambiguous “&”.
+- A suspended/interrupted audio context could leave “Playing” visible indefinitely. Context interruptions now stop output, timers and indicators, and offer a retry. Cancelled or rejected late startups cannot play or overwrite newer feedback.
+- Rebuilding open-string and progression buttons discarded keyboard focus. Focus now stays on the corresponding button. Duplicate selection renders were removed. The lesson topic starts disabled until its listener/render setup is ready.
+- On narrow screens, Hear/Add controls and the result sit beside the fretboard, with larger pitch labels. The Hear button becomes Stop while playing, without adding a row or shifting the diagram. TAB has its own nearby Stop button. The first guided challenge keeps its prompt beside the neck and returns focus to Next after a correct selection.
+- Unused lesson CSS and conflicting viewport-height rules were removed. Existing safe-area spacing and reduced-motion behavior are preserved.
+
+Additional independent tests traverse **all 90 reachable open-string combinations**, including removals, using separate expected tuning, roots and chord formulas. They check exact pitch sets, bass/slash names, physical string exclusivity and per-string sustain boundaries. Controller tests cover both notes and outlines, scheduled resolution/cancellation, audio interruption/startup races, focus retention, compact controls and exact TAB/audio timing. All browser-observed problems were reproduced before their fixes.
+
+Teaching conventions were compared with Fender’s PIMA guide and Yamaha’s double-stop and chord-construction lessons. The chord builder deliberately separates the selected interval from the complete chord quality, retains thirds in add9 harmonies, and replaces the third for sus4.
 
 ## Implementation and verification
 
@@ -62,8 +81,8 @@ The last three-note voicing is E/B because open B3 is below E4. Adding low E res
 
 `js/thirds-lesson.js` renders the existing lesson and handles its controls. The same selected state drives diagram, text, TAB and playback. It reuses `GuitarAudio.ensureContext` and `GuitarAudio.pluck`, resumes after user gestures, and owns a cancellable gain/timer session. Changing notes, leaving the lesson, opening Help, backgrounding, or pressing Stop ends lesson sound. The implementation adds no dependencies, microphone capture or scoring changes. It remains static and compatible with GitHub Pages.
 
-Run `node --test tests/*.test.cjs` (108 passing tests at completion). `tests/thirds.test.cjs` independently checks all eight MIDI pairs, exact chord pitch sets/basses/omissions, practical hand spans, one pitch per string, completion, roles, open additions, suspended resolution and timed picking events. `tests/thirds-ui.test.cjs` executes the real controller against a small DOM/audio boundary to check selection → build → labels → TAB → audio synchronization, Enter/Space, reset, open bass changes, filtered progressions and all guided challenges.
+Run `node --test tests/*.test.cjs` (115 passing tests after the independent audit). `tests/thirds.test.cjs` independently checks all eight MIDI pairs, exact chord pitch sets/basses/omissions, practical hand spans, one pitch per string, completion, roles, open additions, suspended resolution and timed picking events. `tests/thirds-ui.test.cjs` executes the real controller against a small DOM/audio boundary to check selection → build → labels → TAB → audio synchronization, Enter/Space, reset, open bass changes, filtered progressions and all guided challenges.
 
-Browser checks covered desktop, portrait 390 × 844 and landscape 844 × 390: all eight outline selections, keyboard activation, adding notes, role labels, open E bass, diminished alternatives, guided retries/completion, B7/A progression, Esus4 resolution, and TAB playback after a gesture. No horizontal page overflow was observed; TAB has its own horizontal scroll area. Automated checks cover existing modes, tuner, metronome, game timing/scoring, microphone lifecycle and audio behavior.
+Browser checks covered desktop, portrait 390 × 844, landscape 844 × 390 and a small 320 × 568 portrait frame: all eight outline selections, keyboard activation, adding notes, role labels, open E bass, diminished alternatives, guided retries/completion, B7/A progression, Esus4 resolution, and TAB playback after a gesture. No horizontal page overflow was observed; TAB has its own horizontal scroll area. Automated checks cover existing modes, tuner, metronome, game timing/scoring, microphone lifecycle and audio behavior.
 
 **Limitations:** These responsive checks use Chromium phone-sized frames, not physical iOS Safari. Actual iPhone audio output, touch ergonomics and Safari behavior still need device testing. Playback is a synthesized preview. The lesson reuses fingerpicking conventions/audio, but does not yet register exercises in the microphone-scored practice game.

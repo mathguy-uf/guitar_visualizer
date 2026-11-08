@@ -86,10 +86,11 @@
         const intervals=[...new Set(notes.map(n=>(n.midi-root+12)%12))].sort((a,b)=>a-b);
         const found=formulas.find(([f])=>f.join()===intervals.join());
         const bass=notes.reduce((a,b)=>a.midi<b.midi?a:b), slash=bass.midi%12===root?'':'/'+bass.name;
+        const formulaIntervals=intervals.filter(i=>i!==2).concat(intervals.includes(2)?[2]:[]);
         return {root, intervals, bass, known:!!found, quality:found?.[2] || 'color',
             kind:found?.[3] || (intervals.length===2?'double-stop':'color combination'),
             name:found ? names[root]+found[1]+slash+(found[3].includes('no fifth')?' (no fifth)':'') : notes.map(n=>n.name).join(' + '),
-            formula:intervals.map(i=>roles[i]?.[0] || '?').join('–')};
+            formula:formulaIntervals.map(i=>roles[i]?.[0] || '?').join('–')};
     }
     const lessonState = (index=0, variant=index===1?1:0) => ({index,variant,built:false,open:[],fourth:false,full:false});
     const lessonPair = s => s.fourth ? [note(4,2),note(3,2)] : harmonies[s.index].notes;
@@ -132,13 +133,13 @@
             const n=note(string,0), active=s.open.includes(string), used=target.find(x=>x.string===string);
             const interval=(n.midi-view.recipe.root+12)%12;
             let reason, allowed=false, result=null;
-            if(active) {allowed=true;reason='Added · tap to remove';}
-            else if(used) reason=used.fret?'Already fretted · cannot also ring open':'Already in the recipe';
+            if(active) {allowed=true;reason=`Added ${roles[interval]?.[1] || 'chord tone'} · tap to remove`;}
+            else if(used) reason=used.fret?`${scale.includes(n.midi%12)?'':'Chromatic · outside E major. '}Already fretted · cannot also ring open`:'Already in the recipe';
             else if(!scale.includes(n.midi%12)) reason='Chromatic · outside E major';
             else {
                 result=identify([...target,n],view.recipe.root);
                 allowed=result.known;
-                reason=target.some(x=>x.midi%12===n.midi%12)?'Chord tone':({10:'Minor seventh',2:'Ninth',9:'Sixth'}[interval] || 'Tension · changes the harmony');
+                reason=target.some(x=>x.midi%12===n.midi%12)?'Chord tone':({10:'Minor seventh',2:'Ninth',9:'Sixth',5:'Fourth / 11th · can rub against the third',8:'♭6 · tense against the fifth',1:'♭9 · strong tension'}[interval] || 'Tension · changes the harmony');
                 if(result.known)reason+=' → '+result.name;
                 else reason+='; try a different recipe';
             }
@@ -152,18 +153,24 @@
     }
     function lessonEvents(s, mode='roll') {
         const view=lessonView(s), notes=view.notes;
+        let events;
         if(mode==='build') {
             // Pair together, then added notes individually: never ask one thumb to pinch two strings.
             const extra=notes.filter(n=>!view.pair.some(p=>p.string===n.string));
-            return [{tick:0,duration:3840,notes:view.pair},
+            events=[{tick:0,duration:3840,notes:view.pair},
                 ...extra.map((n,i)=>({tick:960+i*480,duration:2880-i*480,notes:[n]})),
                 {tick:2880,duration:480,notes:[view.pair[0]]},
                 {tick:3360,duration:480,notes:[view.pair[1]]}];
+        } else {
+            const bass=notes.filter(n=>n.string>=4).sort((a,b)=>a.midi-b.midi);
+            const top=notes.filter(n=>n.string<=3).sort((a,b)=>b.string-a.string);
+            const r=[top[0],top[1]||top[0],top[2]||top[0]];
+            events=[bass[0],...r,bass[1]||bass[0],...r.slice().reverse()].map((n,i)=>({tick:i*480,duration:3840-i*480,notes:[n]}));
         }
-        const bass=notes.filter(n=>n.string>=4).sort((a,b)=>a.midi-b.midi);
-        const top=notes.filter(n=>n.string<=3).sort((a,b)=>b.string-a.string);
-        const r=[top[0],top[1]||top[0],top[2]||top[0]];
-        return [bass[0],...r,bass[1]||bass[0],...r.slice().reverse()].map((n,i)=>({tick:i*480,duration:3840-i*480,notes:[n]}));
+        // A real string has one voice: let it ring until its next pluck or the bar line.
+        return events.map(e=>({...e,notes:e.notes.map(n=>({...n,duration:
+            (events.find(next=>next.tick>e.tick&&next.notes.some(x=>x.string===n.string))?.tick ?? 3840)-e.tick
+        }))}));
     }
     const degrees=[['I','IV','V','I'],['I','V','vi','IV'],['I','ii','IV','V7','I']];
     function transition(p,k) {

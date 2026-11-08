@@ -2,14 +2,18 @@
 (function() {
     'use strict';
     const M=GuitarThirds, $=id=>document.getElementById(id);
-    let state=M.lessonState(), step=-1, challenge=-1, correct=false, audioGeneration=0, gain=null, timer=null;
+    let state=M.lessonState(), step=-1, challenge=-1, correct=false, audioGeneration=0, gain=null, timer=null, audioContext=null;
+    const stopButtons=['thirdsStop','thirdsTabStop'];
     const visible=()=>M.harmonies.map((_,i)=>i).filter(i=>$('thirdsQuality').value==='all'||M.harmonies[i].quality===$('thirdsQuality').value);
     const label=i=>M.harmonies[i].notes.map(n=>n.name).join(' + ');
     const y=fret=>130+(fret-.5)*58, xs={6:48,5:92,4:136,3:180,2:224,1:268};
     const text=(x,y,value,cls='')=>`<text x="${x}" y="${y}" class="${cls}" text-anchor="middle" dominant-baseline="middle">${value}</text>`;
     const position=n=>`${['high e','B','G','D','A','low E'][n.string-1]} ${n.fret?'fret '+n.fret:'open'}`;
     const noteLabel=(n,active=true)=>$('thirdsLabels').value==='roles'&&state.built&&active ? M.roles[(n.midi-M.lessonRecipe(state).root+12)%12]?.[0]||n.name : n.name;
+    const targetChord=s=>M.identify([...M.lessonPair(s),...M.completion(s)],M.lessonRecipe(s).root);
+    const recipeChord=s=>s.full&&!s.fourth?M.identify(M.sounding(s.index,s.variant),M.lessonRecipe(s).root):targetChord(s);
     function neck() {
+        $('thirdsNeck').classList.remove('just-built');
         const view=M.lessonView(state), show=$('thirdsShow').checked;
         const indices=state.fourth?[0]:visible();
         const pairFor=i=>state.fourth?view.pair:M.harmonies[i].notes;
@@ -46,7 +50,7 @@
     }
     function renderTab() {
         const events=M.lessonEvents(state,$('thirdsPattern').value), beats=['1','&amp;','2','&amp;','3','&amp;','4','&amp;'];
-        const desc=events.map(e=>`Count ${beats[e.tick/480]}: ${e.notes.map(n=>position(n)+' with '+n.finger).join(' together with ')}`).join('; ');
+        const desc=events.map(e=>`Count ${['1','1 &amp;','2','2 &amp;','3','3 &amp;','4','4 &amp;'][e.tick/480]}: ${e.notes.map(n=>position(n)+' with '+n.finger).join(' together with ')}`).join('; ');
         let s='<svg viewBox="0 0 480 235" role="img" aria-labelledby="thirdsTabTitle"><title id="thirdsTabTitle">4/4. '+desc+'</title>';
         s+=text(24,18,'4/4');
         for(let i=0;i<8;i++)s+=`<g data-tab-slot="${i}">${text(75+i*52,18,beats[i],'thirds-tab-count')}</g>`;
@@ -62,20 +66,30 @@
         $('thirdsTab').innerHTML=s+'</svg>';
         $('thirdsPickingNotes').textContent=state.built?'Only the selected voicing is played. Let notes ring inside the bar; damp them before changing chords.':'You are hearing two notes only. Build the chord to add its missing pitch to this TAB.';
     }
+    function rememberFocus() {
+        const d=document.activeElement?.dataset;
+        if(!d)return null;
+        if(d.openString!==undefined)return ['thirdsOpenAdvice',`[data-open-string="${d.openString}"]`];
+        if(d.thirdStep!==undefined)return ['thirdsProgressionChords',`[data-third-step="${d.thirdStep}"]`];
+        if(d.third!==undefined)return ['thirdsNeck',d.outline!==undefined?`[data-outline="${d.third}"]`:`[data-third="${d.third}"][data-note-string="${d.noteString}"]`];
+        return null;
+    }
     function render() {
-        const v=M.lessonView(state), c=v.chord;
+        const focus=rememberFocus(), v=M.lessonView(state), c=v.chord;
         $('thirdsHarmony').innerHTML=visible().map(i=>`<option value="${i}">${i+1}. ${label(i)}</option>`).join('');
         $('thirdsHarmony').value=String(state.index);
-        $('thirdsVoicing').innerHTML=(state.fourth?[v.recipe]:M.harmonies[state.index].variants).map((r,i)=>`<option value="${i}">${r.name}</option>`).join('');
+        $('thirdsVoicing').innerHTML=(state.fourth?[v.recipe]:M.harmonies[state.index].variants).map((_,i)=>`<option value="${i}">${recipeChord({...state,variant:i}).name}</option>`).join('');
         $('thirdsVoicing').value=String(state.fourth?0:state.variant);
         $('thirdsPairTitle').textContent=v.pair.map(n=>n.name).join(' + ')+' = '+v.interval;
         $('thirdsPairMeta').textContent=v.pair.map(position).join(' · ')+` · ${v.semitones} semitones`;
-        const target=M.identify([...v.pair,...v.completion],v.recipe.root);
+        const target=recipeChord(state);
         $('thirdsOffer').textContent=v.completion.map(n=>`Add ${n.name} (${position(n)}), the ${M.roles[(n.midi-v.recipe.root+12)%12][1]}`).join('; ')+` → ${target.name}.`;
         $('thirdsBuild').textContent=state.built?'✓ Chord built':`Add ${v.completion.map(n=>n.name).join(' + ')} → ${target.name}`;
         $('thirdsBuild').disabled=state.built;
         $('thirdsReset').disabled=!state.built;
         $('thirdsHear').disabled=!state.built;
+        $('thirdsQuickTitle').textContent=state.built?`${c.name} · ${c.kind==='triad'?c.quality+' triad · ':''}${c.formula}`:v.pair.map(n=>n.name).join(' + ')+' · '+v.interval;
+        $('thirdsQuickBuild').textContent=state.built?`♪ Hear ${c.name}`:`Add ${v.completion.map(n=>n.name).join(' + ')} → ${target.name}`;
         $('thirdsChordName').textContent=state.built?c.name:'Two notes — ready to build';
         $('thirdsChordName').className='thirds-chord-name quality-'+c.quality;
         $('thirdsFormula').textContent=state.built?`${c.formula} · ${c.kind==='triad'?c.quality+' ':''}${c.kind}`:'';
@@ -88,33 +102,44 @@
         $('thirdsProgressionNote').textContent=step<0?'Tap a chord to build and hear its voicing.':`${M.degrees[p][step]} · ${c.name}. ${M.transition(p,step)}`;
         $('thirdsPrev').disabled=state.index===visible()[0];$('thirdsNext').disabled=state.index===visible().at(-1);
         neck();renderTab();
+        if(focus)$(focus[0]).querySelector(focus[1])?.focus({preventScroll:true});
     }
     function stop() {
         if(!$('thirdsStop').hidden)$('thirdsAudioStatus').textContent='Sound stopped.';
         audioGeneration++;clearTimeout(timer);gain?.disconnect();gain=null;
-        $('thirdsStop').hidden=true;
+        audioContext?.removeEventListener('statechange',interrupted);audioContext=null;
+        stopButtons.forEach(id=>$(id).hidden=true);
+        $('thirdsQuickHear').textContent='♪ Hear two notes';
         document.querySelectorAll('[data-tab-slot]').forEach(el=>el.classList.remove('is-playing'));
+    }
+    function interrupted() {
+        if(audioContext?.state!=='running'){stop();$('thirdsAudioStatus').textContent='Audio paused. Tap Hear or Play to try again.';}
     }
     async function play(events, message, duration=1, showCount=false) {
         stop();const generation=audioGeneration;
         try {
             const ctx=GuitarAudio.ensureContext();await ctx.resume();if(generation!==audioGeneration)return;
+            if(ctx.state!=='running')throw Error('Audio paused. Tap Hear or Play to try again.');
+            audioContext=ctx;ctx.addEventListener('statechange',interrupted);
             gain=ctx.createGain();gain.connect(ctx.destination);const start=ctx.currentTime+.04;
-            for(const e of events)for(const n of e.notes)GuitarAudio.pluck(ctx,start+e.time,n.midi,e.duration||.7,gain);
-            $('thirdsAudioStatus').textContent=message;$('thirdsStop').hidden=false;
+            for(const e of events)for(const n of e.notes)GuitarAudio.pluck(ctx,start+e.time,n.midi,n.duration??e.duration??.7,gain);
+            $('thirdsAudioStatus').textContent=message;stopButtons.forEach(id=>$(id).hidden=false);
+            $('thirdsQuickHear').textContent='■ Stop sound';
             function update() {
                 if(generation!==audioGeneration)return;
                 const elapsed=ctx.currentTime-start;
+                let frame;for(const e of events)if(e.state&&e.time<=elapsed)frame=e;
+                if(frame&&state!==frame.state){state=frame.state;render();}
                 if(showCount)document.querySelectorAll('[data-tab-slot]').forEach(el=>el.classList.toggle('is-playing',Number(el.dataset.tabSlot)===Math.floor(elapsed/(60/70/2))));
                 if(elapsed>=duration){stop();$('thirdsAudioStatus').textContent='Finished. Try it on your guitar.';return;}
                 timer=setTimeout(update,40);
             }
             update();
-        }catch(e){stop();$('thirdsAudioStatus').textContent=GuitarAudio.message(e);}
+        }catch(e){if(generation!==audioGeneration)return;stop();$('thirdsAudioStatus').textContent=GuitarAudio.message(e);}
     }
     function hear(pair=false) {return play([{time:0,notes:pair?M.lessonPair(state):M.lessonNotes(state)}],pair?'Playing the two-note double-stop.':'Playing '+M.lessonView(state).chord.name+'.');}
-    function select(i,variant) {
-        stop();state=M.lessonState(i,variant);step=-1;render();
+    function select(i,variant,overrides={},progressionStep=-1) {
+        stop();state={...M.lessonState(i,variant),...overrides};step=progressionStep;render();
         const neck=$('thirdsNeck'), pair=M.lessonPair(state);
         if(neck.scrollHeight>neck.clientHeight)neck.scrollTop=i===0?0:Math.max(0,(y(pair[0].fret)+y(pair[1].fret))/2*neck.clientWidth/360-(neck.clientHeight+128*neck.clientWidth/360)/2);
     }
@@ -132,29 +157,32 @@
     $('thirdsPattern').addEventListener('change',()=>{stop();renderTab();});
     for(const [id,delta] of [['thirdsPrev',-1],['thirdsNext',1]])$(id).addEventListener('click',()=>select(visible()[visible().indexOf(state.index)+delta]));
     $('thirdsBuild').addEventListener('click',build);
+    $('thirdsQuickBuild').addEventListener('click',()=>state.built?hear():build());
+    $('thirdsQuickHear').addEventListener('click',()=>$('thirdsStop').hidden?hear(true):stop());
     $('thirdsReset').addEventListener('click',()=>{stop();state={...state,built:false,open:[],full:false};step=-1;render();});
-    $('thirdsHearPair').addEventListener('click',()=>hear(true));$('thirdsHear').addEventListener('click',()=>hear());$('thirdsStop').addEventListener('click',stop);
-    $('thirdsOpenAdvice').addEventListener('click',e=>{const b=e.target.closest('[data-open-string]');if(!b)return;stop();state=M.addOpen(state,Number(b.dataset.openString));step=-1;render();hear();});
-    $('thirdsPlayTab').addEventListener('click',()=>{const events=M.lessonEvents(state,$('thirdsPattern').value);play(events.map(e=>({time:e.tick/960*60/70,notes:e.notes,duration:e.duration/960*60/70})), 'Playing the bar at 70 BPM.',4*60/70,true);});
+    $('thirdsHearPair').addEventListener('click',()=>hear(true));$('thirdsHear').addEventListener('click',()=>hear());stopButtons.forEach(id=>$(id).addEventListener('click',stop));
+    $('thirdsOpenAdvice').addEventListener('click',e=>{const b=e.target.closest('[data-open-string]');if(!b||b.disabled)return;stop();state=M.addOpen(state,Number(b.dataset.openString));step=-1;render();hear();});
+    $('thirdsPlayTab').addEventListener('click',()=>{const events=M.lessonEvents(state,$('thirdsPattern').value);play(events.map(e=>({time:e.tick/960*60/70,notes:e.notes.map(n=>({...n,duration:n.duration/960*60/70}))})), 'Playing the bar at 70 BPM.',4*60/70,true);});
     $('thirdsProgression').addEventListener('change',()=>{step=-1;stop();render();});
     $('thirdsProgressionChords').addEventListener('click',e=>{
         const b=e.target.closest('[data-third-step]');if(!b)return;reveal();
         const k=Number(b.dataset.thirdStep), [,i,r]=M.progressions[Number($('thirdsProgression').value)].steps[k];
-        select(i,r);state={...state,built:true,full:true};step=k;render();hear();
+        select(i,r,{built:true,full:true},k);hear();
     });
     function activate(e) {
         const target=e.target.closest('[data-third]');if(!target)return;
         if(e.type==='keydown'&&!['Enter',' '].includes(e.key))return;
         e.preventDefault();const i=Number(target.dataset.third), fourth=state.fourth, isOutline=target.hasAttribute('data-outline'), string=target.dataset.noteString;
-        select(i);state.fourth=fourth;render();
+        select(i,undefined,{fourth});
         if(e.type==='keydown')$('thirdsNeck').querySelector(isOutline?`[data-outline="${i}"]`:`[data-third="${i}"][data-note-string="${string}"]`)?.focus({preventScroll:true});
-        if(challenge===0){correct=i===0&&!fourth;feedback(correct?'Yes: E at D2 and G♯ at G1. That is a major third.':'Look near the nut: E is at D2 and G♯ at G1. Try their dashed outline.');}
+        if(challenge===0){correct=i===0&&!fourth;feedback(correct?'Yes: E at D2 and G♯ at G1. That is a major third.':'Look near the nut: E is at D2 and G♯ at G1. Try their dashed outline.');if(correct){$('thirdsChallenge').scrollIntoView({block:'nearest'});$('thirdsPracticeNext').focus({preventScroll:true});}}
     }
     $('thirdsNeck').addEventListener('click',activate);$('thirdsNeck').addEventListener('keydown',activate);
-    $('thirdsFourth').addEventListener('click',()=>{reveal();select(0);state.fourth=true;render();$('thirdsPairTitle').scrollIntoView({block:'nearest'});hear(true);});
+    $('thirdsFourth').addEventListener('click',()=>{reveal();select(0,undefined,{fourth:true});$('thirdsPairTitle').scrollIntoView({block:'nearest'});hear(true);});
     $('thirdsResolve').addEventListener('click',()=>{
-        reveal();select(0);state={...state,built:true};render();
-        play([{time:0,notes:[M.note(4,2),M.note(3,2),M.note(2,0)],duration:.85},{time:1.1,notes:M.lessonNotes(state),duration:1}], 'Esus4 → E major: A moves down one fret to G♯.',2.2);
+        reveal();select(0,undefined,{built:true,fourth:true});
+        const sus=state, resolved={...state,fourth:false};
+        play([{time:0,notes:M.lessonNotes(sus),state:sus,duration:.85},{time:1.1,notes:M.lessonNotes(resolved),state:resolved,duration:1}], 'Esus4 → E major: A moves down one fret to G♯.',2.2);
     });
     const questions=[
         ['Find E and G♯. Tap their outline or either note near the nut.',[],null],
@@ -164,19 +192,24 @@
         ['Why can the minor third G♯–B belong to E major?',['They are E’s third and fifth.','Every minor third makes a minor chord.','B changes to B♭.'],'They are E’s third and fifth.']
     ];
     const explanations=['','B is the perfect fifth: E–G♯–B = 1–3–5.','C♯ is the perfect fifth: F♯–A–C♯ = 1–♭3–5.','E is the perfect fifth: A–C♯–E = 1–3–5.','Exactly. Adding E reveals the root; G♯ is the major third and B the fifth.'];
-    function feedback(message){$('thirdsFeedback').textContent=message;$('thirdsPracticeNext').disabled=!correct;}
+    function feedback(message){
+        $('thirdsFeedback').textContent=message;$('thirdsPracticeNext').disabled=!correct;
+        $('thirdsFindHint').hidden=challenge!==0;
+        $('thirdsFindHint').textContent=message||'Find E at D2 and G♯ at G1. Tap their outline or either note.';
+    }
     function showChallenge() {
         correct=false;reveal();select([1,0,1,3,2][challenge]);
         $('thirdsChallenge').hidden=false;$('thirdsQuestion').textContent=`${challenge+1} / 5 · ${questions[challenge][0]}`;
         $('thirdsAnswers').innerHTML=questions[challenge][1].map((answer,i)=>`<button class="secondary-button" data-answer="${i}">${answer}</button>`).join('');
         $('thirdsPracticeNext').textContent=challenge===4?'Finish practice':'Next challenge →';feedback('');
-        if(challenge===0)$('thirdsNeck').scrollIntoView({block:'center'});
+        if(challenge===0){$('thirdsNeck').scrollIntoView({block:'center'});$('thirdsNeck').focus({preventScroll:true});}
     }
     $('thirdsPracticeStart').addEventListener('click',()=>{challenge=0;showChallenge();});
     $('thirdsAnswers').addEventListener('click',e=>{const b=e.target.closest('[data-answer]');if(!b||challenge<1)return;correct=questions[challenge][1][Number(b.dataset.answer)]===questions[challenge][2];feedback(correct?explanations[challenge]:'Try again. Think of the root, third and fifth of the target chord.');if(correct){reveal();select([1,0,1,3,2][challenge]);build();}});
     $('thirdsPracticeNext').addEventListener('click',()=>{if(!correct)return;if(challenge===4){challenge=-1;$('thirdsAnswers').innerHTML='';$('thirdsQuestion').textContent='Five challenges complete.';feedback('You can now turn two-note fragments into chords. Try your own progression.');$('thirdsPracticeNext').disabled=true;}else{challenge++;showChallenge();}});
-    document.querySelectorAll('.primary-nav button,[data-help]').forEach(b=>b.addEventListener('click',stop));
+    document.querySelectorAll('.primary-nav button,[data-help],[data-go],.brand').forEach(b=>b.addEventListener('click',stop));
     document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});window.addEventListener('pagehide',stop);
     if(!visible().includes(state.index))state=M.lessonState(visible()[0]);
     render();
+    document.querySelectorAll('[data-learn-view]').forEach(button=>button.disabled=false);
 })();
