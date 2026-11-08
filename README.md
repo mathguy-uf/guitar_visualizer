@@ -1,3 +1,7 @@
+## E-major thirds lesson
+
+Open **Learn → E major thirds** for a vertical D/G-string scale map, selectable double-stops, open-string chord recipes, three progressions, sound previews, and 4/4 fingerpicking TAB. [Lesson notes and teaching references](docs/THIRDS_LESSON.md).
+
 > **Guitar learning app:** This checkout adds Learn / Practice / Play / Tools navigation and a new fingerpicking game built from scratch. See [docs/REVIEW.md](docs/REVIEW.md) for functionality, architecture, testing, and current limitations. No build or runtime dependencies are required. The original feature reference follows below.
 
 # Guitar Visualizer
