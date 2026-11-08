@@ -62,3 +62,99 @@ test('progressions select complete major/minor chords and a real dominant sevent
     assert.equal(T.harmonies[2].quality,'minor');assert.equal(T.harmonies[2].variants[0].quality,'major');
     assert.equal(T.harmonies[6].quality,'minor');assert.equal(T.harmonies[6].variants[0].quality,'major');
 });
+
+test('builder starts with two notes, then completes each practical triad and recalculates the bass',()=>{
+    const expected=[[52,56,59,'E'],[54,57,61,'F♯m'],[56,59,64,'E/G♯'],[57,61,64,'A'],[59,63,66,'B'],[61,64,68,'C♯m'],[63,66,59,'B'],[64,68,59,'E/B']];
+    expected.forEach(([a,b,c,name],i)=>{
+        const s=T.lessonState(i);assert.equal(T.lessonNotes(s).length,2);
+        assert.deepEqual(T.lessonNotes({...s,built:true}).map(n=>n.midi),[a,b,c]);
+        const view=T.lessonView({...s,built:true});assert.equal(view.chord.name,name);assert.equal(view.chord.kind,'triad');
+    });
+    const dim=T.lessonView({...T.lessonState(6,1),built:true});
+    assert.equal(dim.chord.name,'D♯dim/A');assert.equal(dim.chord.formula,'1–♭3–♭5');assert.equal(dim.chord.bass.midi,45);
+});
+test('note roles are relative to the complete chord, not the double-stop root',()=>{
+    const s={...T.lessonState(2),built:true},v=T.lessonView(s);
+    assert.equal(v.semitones,3);assert.equal(v.chord.quality,'major');
+    assert.deepEqual(v.noteRoles.map(n=>n.role[0]),['3','5','1']);
+    assert.deepEqual(T.lessonView({...T.lessonState(1),built:true}).noteRoles.map(n=>n.role[0]),['1','♭3','5']);
+});
+test('open drones preserve a physical voicing and update chord type and inversion',()=>{
+    const eg={...T.lessonState(2),built:true};
+    assert.equal(T.lessonView(T.addOpen(eg,6)).chord.name,'E');
+    const am={...T.lessonState(3),built:true};
+    assert.equal(T.lessonView(T.addOpen(am,2)).chord.name,'Aadd9');
+    const fm={...T.lessonState(1),built:true};
+    assert.equal(T.lessonView(T.addOpen(fm,1)).chord.name,'F♯m7');
+    assert.equal(T.lessonView(T.addOpen(fm,6)).chord.name,'F♯m7/E');
+    assert.equal(T.addOpen(fm,2),fm,'B string is occupied at fret 2');
+    for(const s of [eg,am,fm])for(const n of T.openChoices(s))if(n.allowed){
+        const added=T.addOpen(s,n.string);assert.equal(new Set(T.lessonNotes(added).map(n=>n.string)).size,T.lessonNotes(added).length);
+        assert.deepEqual(T.addOpen(added,n.string),s);
+    }
+    assert.equal(T.addOpen(T.lessonState(),6).built,false,'build first');
+});
+test('perfect fourth comparison resolves the fourth to a major third',()=>{
+    const sus={...T.lessonState(),fourth:true,built:true},e={...T.lessonState(),built:true};
+    assert.equal(T.lessonView(sus).semitones,5);assert.equal(T.lessonView(sus).chord.name,'Esus4');
+    assert.equal(T.lessonView(sus).chord.formula,'1–4–5');
+    assert.deepEqual(T.lessonNotes(sus).map(n=>n.midi),[52,57,59]);
+    assert.deepEqual(T.lessonNotes(e).map(n=>n.midi),[52,56,59]);
+});
+test('pinch and roll events use only selected notes, unique fingers, and one bar',()=>{
+    for(let i=0;i<8;i++)for(let j=0;j<T.harmonies[i].variants.length;j++)for(const built of [false,true])for(const full of [false,true]){
+        const s={...T.lessonState(i,j),built,full};
+        for(const mode of ['build','roll']){
+            const events=T.lessonEvents(s,mode);assert.equal(new Set(events.map(e=>e.tick)).size,events.length);
+            for(const e of events){assert.ok(e.tick+e.duration<=3840);assert.equal(new Set(e.notes.map(n=>n.finger)).size,e.notes.length);for(const n of e.notes)assert.ok(T.lessonNotes(s).some(x=>x.midi===n.midi&&x.string===n.string));}
+            if(mode==='build'){assert.equal(events[0].notes.length,2);assert.equal(events[0].tick,0);}
+            else{assert.equal(events.length,8);assert.ok(events.every(e=>e.notes.length===1));}
+        }
+    }
+});
+
+test('independent chord arithmetic validates every reachable open-string combination and removal',()=>{
+    const standard=[64,59,55,50,45,40], spelling=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+    const roots=[[4],[6,6],[4],[9,9],[11,11],[1,1],[11,3,11],[4]];
+    const formulas={
+        '0,4,7':['','major','1–3–5'], '0,3,7':['m','minor','1–♭3–5'],
+        '0,3,6':['dim','diminished','1–♭3–♭5'], '0,4,7,10':['7','dominant','1–3–5–♭7'],
+        '0,3,7,10':['m7','minor','1–♭3–5–♭7'], '0,3,10':['m7','minor','1–♭3–♭7'],
+        '0,2,4,7':['add9','major','1–3–5–9']
+    };
+    let checked=0;
+    for(let index=0;index<8;index++)for(let variant=0;variant<roots[index].length;variant++)for(const full of [false,true]){
+        const seen=new Set(),root=roots[index][variant];
+        function check(s){
+            const key=s.open.slice().sort().join();if(seen.has(key))return;seen.add(key);checked++;
+            const notes=T.lessonNotes(s),v=T.lessonView(s);
+            for(const n of notes){assert.equal(n.midi,standard[n.string-1]+n.fret);assert.equal(n.name,spelling[n.midi%12]);}
+            assert.equal(new Set(notes.map(n=>n.string)).size,notes.length);
+            const intervals=[...new Set(notes.map(n=>(n.midi-root)%12))].sort((a,b)=>a-b);
+            const [suffix,quality,formula]=formulas[intervals.join()]||[];
+            assert.notEqual(suffix,undefined,'independently known pitch set');
+            const bass=Math.min(...notes.map(n=>n.midi))%12;
+            assert.equal(v.chord.name,spelling[root]+suffix+(bass===root?'':'/'+spelling[bass])+(intervals.join()==='0,3,10'?' (no fifth)':''));
+            assert.equal(v.chord.quality,quality);assert.equal(v.chord.formula,formula);
+            for(const choice of T.openChoices(s)){
+                if(!choice.allowed)continue;
+                const next=T.addOpen(s,choice.string);
+                if(!choice.active){assert.ok(!notes.some(n=>n.string===choice.string));assert.ok([4,9,11].includes(choice.midi%12));}
+                check(next);
+            }
+            for(const mode of ['build','roll'])for(const e of T.lessonEvents(s,mode))for(const n of e.notes){
+                assert.ok(n.duration>0);assert.ok(e.tick+n.duration<=3840);
+                const next=T.lessonEvents(s,mode).find(x=>x.tick>e.tick&&x.notes.some(p=>p.string===n.string));
+                assert.equal(e.tick+n.duration,next?.tick??3840,'one sustained voice per physical string');
+            }
+        }
+        check({...T.lessonState(index,variant),built:true,full});
+    }
+    assert.equal(checked,90);
+});
+
+test('added ninth formulas keep the triad together before the extension',()=>{
+    const s=T.addOpen({...T.lessonState(3),built:true},2),v=T.lessonView(s);
+    assert.equal(v.chord.name,'Aadd9');assert.equal(v.chord.formula,'1–3–5–9');
+    assert.match(T.explanation(s),/no seventh is present/);
+});

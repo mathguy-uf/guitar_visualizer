@@ -1,11 +1,11 @@
 /* E-major double-stops, voicings and picking data. String 1 is high e. */
 (function(root, factory) {
-    const api = factory();
+    const api = factory(typeof module === 'object' && module.exports ? require('./music.js') : root.GuitarMusic);
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.GuitarThirds = api;
-})(globalThis, () => {
+})(globalThis, Music => {
     'use strict';
-    const tuning = [64, 59, 55, 50, 45, 40];
+    const tuning = Music.tuning;
     const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
     const scale = [4, 6, 8, 9, 11, 1, 3];
     const note = (string, fret) => ({string, fret, midi: tuning[string - 1] + fret,
@@ -66,5 +66,119 @@
         const roll = [treble[0], treble[1] || treble[0], treble[2] || treble[0]];
         return [bass[0], ...roll, bass[1] || bass[0], ...roll.slice().reverse()];
     }
-    return {tuning, scale, note, harmonies, progressions, sounding, openAdvice, picking};
+    // Keep the original recipes/API for the explorer's established lesson data.
+    // The builder starts with only the two-note fragment, then adds distinct pitches.
+    const roles = {0:['1','root'],2:['9','ninth'],3:['♭3','minor third'],4:['3','major third'],5:['4','perfect fourth'],6:['♭5','diminished fifth'],7:['5','perfect fifth'],8:['♯5','augmented fifth'],9:['6','sixth'],10:['♭7','minor seventh'],11:['7','major seventh']};
+    const formulas = [
+        [[0,4,7], '', 'major','triad'], [[0,3,7], 'm','minor','triad'],
+        [[0,3,6], 'dim','diminished','triad'], [[0,4,8], 'aug','augmented','triad'],
+        [[0,5,7], 'sus4','suspended','suspended harmony'],
+        [[0,2,4,7], 'add9','major','added-note harmony'],
+        [[0,4,7,10], '7','dominant','seventh chord'],
+        [[0,3,7,10], 'm7','minor','seventh chord'],
+        [[0,3,10], 'm7','minor','seventh chord (no fifth)'],
+        [[0,4,7,9], '6','major','added-note harmony'],
+        [[0,3,7,9], 'm6','minor','added-note harmony'],
+        [[0,2,3,7], 'm(add9)','minor','added-note harmony']
+    ];
+    function identify(notes, root) {
+        if(new Set(notes.map(n=>n.string)).size!==notes.length) throw Error('One pitch per string');
+        const intervals=[...new Set(notes.map(n=>(n.midi-root+12)%12))].sort((a,b)=>a-b);
+        const found=formulas.find(([f])=>f.join()===intervals.join());
+        const bass=notes.reduce((a,b)=>a.midi<b.midi?a:b), slash=bass.midi%12===root?'':'/'+bass.name;
+        const formulaIntervals=intervals.filter(i=>i!==2).concat(intervals.includes(2)?[2]:[]);
+        return {root, intervals, bass, known:!!found, quality:found?.[2] || 'color',
+            kind:found?.[3] || (intervals.length===2?'double-stop':'color combination'),
+            name:found ? names[root]+found[1]+slash+(found[3].includes('no fifth')?' (no fifth)':'') : notes.map(n=>n.name).join(' + '),
+            formula:formulaIntervals.map(i=>roles[i]?.[0] || '?').join('–')};
+    }
+    const lessonState = (index=0, variant=index===1?1:0) => ({index,variant,built:false,open:[],fourth:false,full:false});
+    const lessonPair = s => s.fourth ? [note(4,2),note(3,2)] : harmonies[s.index].notes;
+    const lessonRecipe = s => s.fourth ? v('Esus4',4,'suspended',[0,5,7],[[2,0]],'E–A is a perfect fourth. B adds the fifth. With A replacing G♯, there is no third: this is Esus4.') : harmonies[s.index].variants[s.variant];
+    function completion(s) {
+        const used = new Set(lessonPair(s).map(n=>n.midi%12));
+        return lessonRecipe(s).extra.filter(n=>{if(used.has(n.midi%12))return false;used.add(n.midi%12);return true;});
+    }
+    function lessonNotes(s) {
+        const notes=[...lessonPair(s),...(s.built?(s.full?lessonRecipe(s).extra:completion(s)):[])];
+        for(const string of s.open) {
+            if(notes.some(n=>n.string===string))throw Error('That string is already in use');
+            notes.push(note(string,0));
+        }
+        return notes;
+    }
+    function lessonView(s) {
+        const pair=lessonPair(s), recipe=lessonRecipe(s), notes=lessonNotes(s), chord=identify(notes,recipe.root);
+        const semitones=pair[1].midi-pair[0].midi;
+        return {pair,recipe,notes,completion:completion(s),chord,semitones,
+            interval:({3:'Minor third',4:'Major third',5:'Perfect fourth'})[semitones],
+            noteRoles:notes.map(n=>({...n,role:roles[(n.midi-recipe.root+12)%12]}))};
+    }
+    function explanation(s) {
+        const v=lessonView(s), c=v.chord;
+        if(!s.built)return 'A double-stop suggests a harmony. The note you add determines which chord you hear.';
+        const unique=v.noteRoles.filter((n,i,all)=>all.findIndex(x=>x.midi%12===n.midi%12)===i);
+        let result=unique.map(n=>`${n.name} is the ${n.role[1]}`).join('; ')+'. ';
+        if(v.semitones===3&&c.quality==='major')result+='The double-stop is a minor third, but its notes are the third and fifth of this major chord. ';
+        if(c.kind==='suspended harmony')result+='The fourth replaces the third, so this harmony is neither major nor minor. ';
+        if(c.kind.includes('no fifth'))result+='The fifth is omitted; this is an incomplete seventh chord, not a triad. ';
+        if(c.intervals.includes(2)&&!c.intervals.includes(10)&&!c.intervals.includes(11))result+='The added ninth is an extension of the triad; no seventh is present. ';
+        if(c.bass.midi%12!==c.root)result+=`${c.bass.name} is the lowest sounding note, so it follows the slash in ${c.name}. `;
+        else result+=`${c.bass.name} is the root and the lowest sounding note. `;
+        return result.trim();
+    }
+    function openChoices(s) {
+        const view=lessonView(s), target=s.built?view.notes:[...view.pair,...view.completion];
+        return [6,5,4,3,2,1].map(string=>{
+            const n=note(string,0), active=s.open.includes(string), used=target.find(x=>x.string===string);
+            const interval=(n.midi-view.recipe.root+12)%12;
+            let reason, allowed=false, result=null;
+            if(active) {allowed=true;reason=`Added ${roles[interval]?.[1] || 'chord tone'} · tap to remove`;}
+            else if(used) reason=used.fret?`${scale.includes(n.midi%12)?'':'Chromatic · outside E major. '}Already fretted · cannot also ring open`:'Already in the recipe';
+            else if(!scale.includes(n.midi%12)) reason='Chromatic · outside E major';
+            else {
+                result=identify([...target,n],view.recipe.root);
+                allowed=result.known;
+                reason=target.some(x=>x.midi%12===n.midi%12)?'Chord tone':({10:'Minor seventh',2:'Ninth',9:'Sixth',5:'Fourth / 11th · can rub against the third',8:'♭6 · tense against the fifth',1:'♭9 · strong tension'}[interval] || 'Tension · changes the harmony');
+                if(result.known)reason+=' → '+result.name;
+                else reason+='; try a different recipe';
+            }
+            return {...n,active,allowed,reason,result};
+        });
+    }
+    function addOpen(s,string) {
+        const choice=openChoices(s).find(n=>n.string===string);
+        if(!s.built || !choice?.allowed)return s;
+        return {...s,open:choice.active?s.open.filter(x=>x!==string):[...s.open,string]};
+    }
+    function lessonEvents(s, mode='roll') {
+        const view=lessonView(s), notes=view.notes;
+        let events;
+        if(mode==='build') {
+            // Pair together, then added notes individually: never ask one thumb to pinch two strings.
+            const extra=notes.filter(n=>!view.pair.some(p=>p.string===n.string));
+            events=[{tick:0,duration:3840,notes:view.pair},
+                ...extra.map((n,i)=>({tick:960+i*480,duration:2880-i*480,notes:[n]})),
+                {tick:2880,duration:480,notes:[view.pair[0]]},
+                {tick:3360,duration:480,notes:[view.pair[1]]}];
+        } else {
+            const bass=notes.filter(n=>n.string>=4).sort((a,b)=>a.midi-b.midi);
+            const top=notes.filter(n=>n.string<=3).sort((a,b)=>b.string-a.string);
+            const r=[top[0],top[1]||top[0],top[2]||top[0]];
+            events=[bass[0],...r,bass[1]||bass[0],...r.slice().reverse()].map((n,i)=>({tick:i*480,duration:3840-i*480,notes:[n]}));
+        }
+        // A real string has one voice: let it ring until its next pluck or the bar line.
+        return events.map(e=>({...e,notes:e.notes.map(n=>({...n,duration:
+            (events.find(next=>next.tick>e.tick&&next.notes.some(x=>x.string===n.string))?.tick ?? 3840)-e.tick
+        }))}));
+    }
+    const degrees=[['I','IV','V','I'],['I','V','vi','IV'],['I','ii','IV','V7','I']];
+    function transition(p,k) {
+        const steps=progressions[p].steps, next=steps[(k+1)%steps.length];
+        const [,i,v]=steps[k], here=sounding(i,v), there=sounding(next[1],next[2]);
+        const shared=[...new Set(here.filter(n=>there.some(x=>x.midi%12===n.midi%12)).map(n=>n.name))];
+        return `Next: ${next[0]}. `+(shared.length?`The chords share ${shared.join(' and ')}. `:'No shared chord tones; prepare the next shape. ')+(next[0]==='E'?'Listen for the return home to E.':'Keep a steady pulse as you change shapes.');
+    }
+    return {tuning, scale, note, harmonies, progressions, sounding, openAdvice, picking,
+        roles, identify, lessonState, lessonPair, lessonRecipe, completion, lessonNotes, lessonView, explanation, openChoices, addOpen, lessonEvents, degrees, transition};
 });

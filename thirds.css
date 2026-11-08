@@ -11,7 +11,6 @@
 .thirds-lesson h3 { font-size:1.12rem; margin-bottom:10px; }
 .thirds-lesson p { font-size:.91rem; }
 .thirds-intro { max-width:740px; }
-.thirds-start { padding:14px 16px; border-left:3px solid var(--accent); background:var(--panel); border-radius:0 10px 10px 0; }
 .thirds-toolbar { display:flex; gap:14px; align-items:end; flex-wrap:wrap; margin-bottom:12px; }
 .thirds-toolbar .field { flex:1; min-width:240px; }
 .thirds-nav { display:flex; gap:8px; }
@@ -35,9 +34,9 @@
 .thirds-inlay { fill:#82927f; opacity:.55; }
 .thirds-open { fill:var(--panel); stroke:var(--border); }
 .thirds-open.is-open { fill:#f4c767; stroke:#f4c767; }
-.thirds-neck .thirds-open-number { fill:var(--muted); font-size:12px; }
+.thirds-neck .thirds-open-number { fill:var(--muted); font-size:14px; }
 .thirds-open.is-open + text { fill:#15221a!important; }
-.thirds-outline { fill:none; stroke-width:1.5; stroke-dasharray:5 5; opacity:.6; pointer-events:none; }
+.thirds-outline { fill:none; stroke-width:1.5; stroke-dasharray:5 5; opacity:.28; pointer-events:none; }
 .thirds-outline.quality-major { stroke:var(--major); }.thirds-outline.quality-minor { stroke:var(--minor); }
 .thirds-outline.is-selected { stroke-width:3; opacity:1; }
 .thirds-neck .thirds-interval { font-size:11px; font-weight:500; }
@@ -45,7 +44,7 @@
 .thirds-note { cursor:pointer; outline:none; }
 .thirds-hit { fill:transparent; }.thirds-dot { stroke:#24332b; stroke-width:2; }
 .thirds-note.is-scale .thirds-dot { fill:#90c9f9; }.thirds-note.is-third .thirds-dot { fill:#f1e5cb; }
-.thirds-note text,.thirds-extra text { fill:#16241c; font-size:13px; }
+.thirds-note text,.thirds-extra text { fill:#16241c; font-size:15px; }
 .thirds-note.is-selected .thirds-dot { stroke:#fff; stroke-width:3; }
 .thirds-note:focus-visible .thirds-dot { stroke:#f4c767; stroke-width:4; }
 .thirds-extra circle { fill:#f4c767; stroke:#eee7d2; stroke-width:2; }
@@ -54,9 +53,6 @@
 .thirds-result { padding:16px 0 4px; }.thirds-chord-name { font-size:1.5rem!important; }
 .thirds-theory { border-top:1px solid var(--border); margin-top:14px; }
 .thirds-theory p { padding:0 12px; color:var(--muted); font-size:.84rem; }
-.thirds-open-advice { list-style:none; padding:0 12px; margin:0 0 16px; }
-.thirds-open-advice li { display:grid; grid-template-columns:55px 1fr; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:.78rem; color:var(--muted); }
-.thirds-open-advice .is-compatible { color:#f4c767; }
 .thirds-tab { overflow-x:auto; margin:12px -8px; }
 .thirds-tab svg { display:block; width:100%; min-width:400px; }
 .thirds-tab text { fill:var(--text); font:14px system-ui,sans-serif; }
@@ -81,15 +77,50 @@
     .thirds-layout { grid-template-columns:300px minmax(0,1fr); gap:16px; }
     .thirds-lesson .thirds-legend,.thirds-lesson .thirds-diagram-guide { display:flex; }
 }
-.thirds-progression-controls { padding:12px 16px; margin-bottom:12px; border:1px solid var(--border); border-radius:12px; display:grid; grid-template-columns:minmax(230px,1fr) minmax(0,1fr); gap:8px 16px; align-items:end; }
-.thirds-progression-controls .thirds-chord-buttons { margin:0; }
-.thirds-progression-controls p { grid-column:1/-1; margin:0; color:var(--muted); font-size:.8rem; }
-@media (max-width:700px) {
-    .thirds-progression-controls { grid-template-columns:1fr; }
-    .thirds-neck { max-height:65svh; overflow-y:auto; overscroll-behavior-y:contain; border-radius:8px; }
-}
-@media (orientation:landscape) and (max-height:620px) and (min-width:650px) {
-    .thirds-neck { max-height:70svh; overflow-y:auto; overscroll-behavior-y:contain; }
-}
 .thirds-content > * { min-width:0; }
 .thirds-lesson select { max-width:100%; }
+/* Builder additions share the original lesson palette and fretboard geometry. */
+.thirds-pair-target { cursor:pointer; outline:none; }
+.thirds-outline-hit { fill:transparent; stroke:transparent; stroke-width:14; pointer-events:all; }
+.thirds-pair-target:focus-visible .thirds-outline { stroke:#f4c767; stroke-width:4; }
+.thirds-outline.quality-fourth { stroke:#f5b672; }
+.thirds-neck .thirds-interval.quality-fourth { fill:#f5b672; }
+.thirds-suggestion circle { stroke:#f4c767; stroke-dasharray:3 3; }
+.thirds-suggestion text { fill:#f4c767; }
+.thirds-role-chips { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
+.thirds-role-chips span { border:1px solid var(--border); border-radius:9px; padding:7px 10px; }
+.thirds-role-chips small { display:block; color:var(--muted); font-size:.75rem; }
+.thirds-lesson .thirds-small-print { font-size:.78rem; color:var(--muted); margin:10px 0; }
+.thirds-lesson hr { border:0; border-top:1px solid var(--border); margin:18px 0; }
+.thirds-drone-buttons,.thirds-answer-buttons { display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 12px; }
+.thirds-drone-buttons button { flex:1 1 145px; text-align:left; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); }
+.thirds-drone-buttons button span { display:block; font-size:.78rem; }
+.thirds-drone-buttons button[aria-pressed=true] { border-color:#f4c767; }
+.thirds-fourth,.thirds-practice { padding:18px; border:1px solid var(--border); background:var(--panel); border-radius:14px; }
+.thirds-lesson > .thirds-picking,.thirds-lesson > .thirds-progression,.thirds-practice { margin-top:20px; }
+.thirds-lesson .thirds-picking .field { max-width:450px; }
+.thirds-tab { max-width:690px; }
+.thirds-pinch-line { stroke:#f4c767; stroke-width:3; }
+.thirds-tab [data-tab-slot].is-playing text { fill:#f4c767; font-weight:bold; }
+.thirds-neck-card { position:sticky; top:12px; }
+.thirds-neck { max-height:70vh; max-height:70svh; overflow-y:auto; overscroll-behavior-y:contain; border-radius:8px; }
+.thirds-neck-top { position:sticky; top:0; z-index:2; background:var(--panel); }
+.thirds-quick-actions { display:none; }
+.thirds-find-hint { border-left:3px solid var(--accent); padding:4px 10px; margin:8px; }
+.thirds-neck-card,.thirds-detail,.thirds-practice { scroll-margin-block:16px; }
+.thirds-lesson .primary-button { min-height:48px; margin-bottom:8px; }
+.thirds-lesson .quality-suspended { color:#f5b672; }
+.thirds-lesson button { touch-action:manipulation; }
+.just-built .thirds-extra circle,.just-built .thirds-open.is-open { animation:thirds-arrive .5s ease-out; }
+@keyframes thirds-arrive { from { stroke-width:7; stroke:#fff; } to { stroke-width:2; } }
+@media (prefers-reduced-motion:reduce) { .just-built .thirds-extra circle,.just-built .thirds-open.is-open { animation:none; } }
+@media (max-width:700px) {
+    .thirds-neck-card { position:static; }
+    .thirds-quick-actions { display:block; padding:0 8px 8px; }
+    .thirds-quick-actions p { font-weight:650; margin:0 0 8px; }
+    .thirds-quick-actions > div { display:flex; flex-wrap:wrap; gap:8px; }
+    .thirds-quick-actions button { flex:1 1 125px; min-height:44px; padding:8px; font-size:.83rem; }
+    .thirds-neck { max-height:46vh; max-height:46svh; }
+    .thirds-role-chips span { flex:1 1 110px; }
+    .thirds-detail button { max-width:100%; }
+}
