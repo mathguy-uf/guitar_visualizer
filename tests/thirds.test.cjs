@@ -62,3 +62,53 @@ test('progressions select complete major/minor chords and a real dominant sevent
     assert.equal(T.harmonies[2].quality,'minor');assert.equal(T.harmonies[2].variants[0].quality,'major');
     assert.equal(T.harmonies[6].quality,'minor');assert.equal(T.harmonies[6].variants[0].quality,'major');
 });
+
+test('builder starts with two notes, then completes each practical triad and recalculates the bass',()=>{
+    const expected=[[52,56,59,'E'],[54,57,61,'F♯m'],[56,59,64,'E/G♯'],[57,61,64,'A'],[59,63,66,'B'],[61,64,68,'C♯m'],[63,66,59,'B'],[64,68,59,'E/B']];
+    expected.forEach(([a,b,c,name],i)=>{
+        const s=T.lessonState(i);assert.equal(T.lessonNotes(s).length,2);
+        assert.deepEqual(T.lessonNotes({...s,built:true}).map(n=>n.midi),[a,b,c]);
+        const view=T.lessonView({...s,built:true});assert.equal(view.chord.name,name);assert.equal(view.chord.kind,'triad');
+    });
+    const dim=T.lessonView({...T.lessonState(6,1),built:true});
+    assert.equal(dim.chord.name,'D♯dim/A');assert.equal(dim.chord.formula,'1–♭3–♭5');assert.equal(dim.chord.bass.midi,45);
+});
+test('note roles are relative to the complete chord, not the double-stop root',()=>{
+    const s={...T.lessonState(2),built:true},v=T.lessonView(s);
+    assert.equal(v.semitones,3);assert.equal(v.chord.quality,'major');
+    assert.deepEqual(v.noteRoles.map(n=>n.role[0]),['3','5','1']);
+    assert.deepEqual(T.lessonView({...T.lessonState(1),built:true}).noteRoles.map(n=>n.role[0]),['1','♭3','5']);
+});
+test('open drones preserve a physical voicing and update chord type and inversion',()=>{
+    const eg={...T.lessonState(2),built:true};
+    assert.equal(T.lessonView(T.addOpen(eg,6)).chord.name,'E');
+    const am={...T.lessonState(3),built:true};
+    assert.equal(T.lessonView(T.addOpen(am,2)).chord.name,'Aadd9');
+    const fm={...T.lessonState(1),built:true};
+    assert.equal(T.lessonView(T.addOpen(fm,1)).chord.name,'F♯m7');
+    assert.equal(T.lessonView(T.addOpen(fm,6)).chord.name,'F♯m7/E');
+    assert.equal(T.addOpen(fm,2),fm,'B string is occupied at fret 2');
+    for(const s of [eg,am,fm])for(const n of T.openChoices(s))if(n.allowed){
+        const added=T.addOpen(s,n.string);assert.equal(new Set(T.lessonNotes(added).map(n=>n.string)).size,T.lessonNotes(added).length);
+        assert.deepEqual(T.addOpen(added,n.string),s);
+    }
+    assert.equal(T.addOpen(T.lessonState(),6).built,false,'build first');
+});
+test('perfect fourth comparison resolves the fourth to a major third',()=>{
+    const sus={...T.lessonState(),fourth:true,built:true},e={...T.lessonState(),built:true};
+    assert.equal(T.lessonView(sus).semitones,5);assert.equal(T.lessonView(sus).chord.name,'Esus4');
+    assert.equal(T.lessonView(sus).chord.formula,'1–4–5');
+    assert.deepEqual(T.lessonNotes(sus).map(n=>n.midi),[52,57,59]);
+    assert.deepEqual(T.lessonNotes(e).map(n=>n.midi),[52,56,59]);
+});
+test('pinch and roll events use only selected notes, unique fingers, and one bar',()=>{
+    for(let i=0;i<8;i++)for(let j=0;j<T.harmonies[i].variants.length;j++)for(const built of [false,true])for(const full of [false,true]){
+        const s={...T.lessonState(i,j),built,full};
+        for(const mode of ['build','roll']){
+            const events=T.lessonEvents(s,mode);assert.equal(new Set(events.map(e=>e.tick)).size,events.length);
+            for(const e of events){assert.ok(e.tick+e.duration<=3840);assert.equal(new Set(e.notes.map(n=>n.finger)).size,e.notes.length);for(const n of e.notes)assert.ok(T.lessonNotes(s).some(x=>x.midi===n.midi&&x.string===n.string));}
+            if(mode==='build'){assert.equal(events[0].notes.length,2);assert.equal(events[0].tick,0);}
+            else{assert.equal(events.length,8);assert.ok(events.every(e=>e.notes.length===1));}
+        }
+    }
+});
